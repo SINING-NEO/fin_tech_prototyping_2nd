@@ -1,0 +1,67 @@
+[
+  {
+    "id": "li-001",
+    "category": "life-insurance",
+    "title": "Checking Policy Values",
+    "content": "You can view policy values online by logging into your Prudential account. Available information includes policy face amount, cash value, dividend values, loan amount available, loan outstanding, and surrender value. For variable life policies (numbers beginning with Q, R, or 9), you can also see unit values and fund balances. Without online access, call the automated IVR at 1-800-778-2255 with your policy number, Mon-Fri 8 AM-8 PM ET.",
+    "keywords": ["policy values", "cash value", "death benefit", "face amount", "surrender", "account balance"],
+    "agentNotes": "Detailed values may not be available for all policies online. Offer IVR or transfer to CSR if customer cannot access online."
+  },
+  {
+    "id": "li-002",
+    "category": "life-insurance",
+    "title": "Making Premium Payments",
+    "content": "Pay your life insurance premium online with or without logging in. For guest payment, have your policy number and bank account ready. Logged-in customers can set up recurring payments (monthly, quarterly, semi-annual, or annual) via electronic funds transfer. You can schedule payments up to 30 days ahead, but not past your premium due date. Phone support: 1-800-778-2255, Mon-Fri 8 AM-8 PM ET.",
+    "keywords": ["payment", "premium", "pay bill", "recurring", "automatic payment", "EFT", "schedule payment"],
+    "agentNotes": "Guest pay available at prudential.com. Recurring setup requires online login."
+  },
+  {
+    "id": "li-003",
+    "category": "life-insurance",
+    "title": "Policy Loans and Withdrawals",
+    "content": "To request a loan or withdrawal from your Prudential policy, contact your financial professional or call Customer Service at 1-800-778-2255, Mon-Fri 8 AM-8 PM ET. Have your policy number ready. Important: withdrawals and loans affect policy values and the death benefit, and may have tax consequences.",
+    "keywords": ["loan", "withdrawal", "borrow", "cash out", "surrender"],
+    "complianceTags": ["tax-disclosure", "benefit-impact"],
+    "agentNotes": "Always disclose impact on death benefit and potential tax implications. Do not provide tax advice."
+  },
+  {
+    "id": "li-004",
+    "category": "life-insurance",
+    "title": "Changing Beneficiary",
+    "content": "Update your beneficiary by logging into your Prudential online account. Navigate to your policy, then select 'Manage beneficiaries' from Quick Actions. If you don't have online access, register at prudential.com or call 1-800-778-2255 for assistance.",
+    "keywords": ["beneficiary", "change beneficiary", "update beneficiary", "who gets money"],
+    "agentNotes": "Beneficiary changes may require form completion for certain policy types. Verify identity first."
+  },
+  {
+    "id": "li-005",
+    "category": "life-insurance",
+    "title": "Updating Personal Information",
+    "content": "Update your mailing address, email, and phone number by logging into your account and selecting 'Profile' from the top navigation, then 'Edit' next to the details you want to change. If you don't have an account, register online or call 1-800-778-2255.",
+    "keywords": ["address", "phone", "email", "contact info", "personal information", "move"],
+    "agentNotes": "Address changes are self-service online. Confirm change was saved."
+  },
+  {
+    "id": "li-006",
+    "category": "life-insurance",
+    "title": "Reinstating a Lapsed Policy",
+    "content": "If your policy has lapsed, reinstatement may be possible depending on how long it has been lapsed and your health status. Contact your financial professional or call Customer Service at 1-800-778-2255, Mon-Fri 8 AM-8 PM ET. You may need to complete a reinstatement application and provide evidence of insurability.",
+    "keywords": ["lapsed", "reinstate", "expired policy", "bring back policy"],
+    "agentNotes": "Reinstatement rules vary by product and lapse duration. May require underwriting review."
+  },
+  {
+    "id": "li-007",
+    "category": "life-insurance",
+    "title": "Lost Policy Documents",
+    "content": "If you've lost your policy, you can request an All Values Quote Letter containing current policy information including loan value and death benefit, plus everything needed to submit a claim. Contact your financial professional or call 1-800-778-2255, Mon-Fri 8 AM-8 PM ET.",
+    "keywords": ["lost policy", "missing documents", "copy of policy", "all values quote"],
+    "agentNotes": "All Values Quote Letter is the standard solution for lost policy paperwork."
+  },
+  {
+    "id": "li-008",
+    "category": "life-insurance",
+    "title": "Contact Numbers by Policy Type",
+    "content": "Individual Life (Term, Whole, Variable): 1-800-778-2255, Mon-Fri 8 AM-8 PM ET. FE-prefix policies: 1-833-626-1865, Mon-Fri 8 AM-6 PM ET. Intermediate & Weekly Premium (M prefix or 9-digit numbers): 1-800-575-7780. Enrollment help: 1-800-PRU-HELP (778-4357), Mon-Fri 8 AM-10 PM ET.",
+    "keywords": ["phone number", "call", "contact", "customer service", "hours"],
+    "agentNotes": "Always confirm policy number prefix to route to correct team."
+  }
+]

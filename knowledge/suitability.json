@@ -1,0 +1,51 @@
+[
+  {
+    "id": "su-001",
+    "category": "compliance",
+    "title": "Insurance Navigator Role — Empower FRs",
+    "content": "The Insurance Navigator (PruAssist) is designed to empower Financial Representatives, not replace them. It explains policy concepts in plain language, helps customers prepare for advisory conversations, and routes suitability and product-selection questions to the FR. It does not recommend products or make suitability determinations.",
+    "keywords": ["navigator", "financial representative", "advisor", "empower", "role", "purpose"],
+    "agentNotes": "Always position the FR as the decision partner. Navigator prepares and educates; FR advises."
+  },
+  {
+    "id": "su-002",
+    "category": "compliance",
+    "title": "Suitability Conversation — FR-Led Discovery",
+    "content": "When a customer asks what product or coverage is right for them, do not recommend. Support suitability by suggesting FR-led discovery: financial goals, time horizon, dependents, existing coverage, budget, risk tolerance, and life changes. The FR conducts formal suitability assessment. Offer to schedule or connect with their assigned Financial Representative.",
+    "keywords": ["suitable", "suitability", "which policy", "right for me", "recommend", "what should I buy", "best plan"],
+    "complianceTags": ["suitability", "FR-handoff"],
+    "agentNotes": "Use discovery question prompts. Never say 'this product is suitable for you'."
+  },
+  {
+    "id": "su-003",
+    "category": "life-insurance",
+    "title": "Plain Language — Death Benefit vs Cash Value",
+    "content": "Death benefit: the amount paid to beneficiaries when the insured person passes away — think of it as the protection your loved ones receive. Cash value: the savings component that can grow over time in some policies — like a built-in account you may be able to borrow against. These are different and affect each other if you take loans or withdrawals. Your Financial Representative can explain how this applies to your specific policy.",
+    "keywords": ["death benefit", "cash value", "explain", "simple terms", "plain language", "difference", "jargon"],
+    "agentNotes": "Use this plain-language framing when customers are confused by policy statements."
+  },
+  {
+    "id": "su-004",
+    "category": "life-insurance",
+    "title": "Plain Language — Premium vs Payment Mode",
+    "content": "Premium: the amount you pay to keep your policy active — like your subscription to stay covered. Payment mode: how often you pay (monthly, quarterly, semi-annual, or annual). Paying annually sometimes costs less overall than monthly. Your Financial Representative can review whether your current payment mode still fits your budget.",
+    "keywords": ["premium", "payment mode", "explain", "monthly", "annual", "plain language"],
+    "agentNotes": "Good for building customer confidence before FR budget review."
+  },
+  {
+    "id": "su-005",
+    "category": "policy-servicing",
+    "title": "Connecting with Your Financial Representative",
+    "content": "Customers can find a Financial Representative through the agent search on prudential.com or by calling Customer Service at 1-800-778-2255, Mon-Fri 8 AM-8 PM ET. FRs help with policy reviews, suitability discussions, coverage changes, and personalized planning. The Insurance Navigator prepares customers for these conversations but does not replace them.",
+    "keywords": ["find advisor", "financial representative", "connect", "speak to advisor", "agent", "my rep"],
+    "agentNotes": "Proactive FR connection builds trust in the advisory process."
+  },
+  {
+    "id": "su-006",
+    "category": "compliance",
+    "title": "Building Customer Confidence in Advisory Process",
+    "content": "Help customers feel informed, not sold to. Encourage them to bring questions to their FR: How does my policy fit my goals? What happens if my situation changes? What are my options without pressure? Transparency about what the Navigator can and cannot do increases trust in human advisors.",
+    "keywords": ["confidence", "trust", "advisory", "questions for advisor", "prepare", "informed"],
+    "agentNotes": "Suggest 3-5 questions the customer can ask their FR to feel prepared."
+  }
+]

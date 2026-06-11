@@ -1,0 +1,27 @@
+[
+  {
+    "id": "cl-001",
+    "category": "claims",
+    "title": "Filing a Death Claim",
+    "content": "You can submit an individual life insurance death claim online or through your financial professional. You'll need a certified death certificate. For claim status, call 1-800-496-1035, Monday through Friday, 8 AM to 8 PM ET. Claims can also be filed online 24/7. Our team handles each claim with care and will guide you through required documentation.",
+    "keywords": ["death claim", "file claim", "passed away", "deceased", "bereavement", "funeral", "death certificate"],
+    "complianceTags": ["sensitive", "FNOL"],
+    "agentNotes": "Use empathetic language. Never rush. Confirm relationship to deceased. Required doc: certified death certificate."
+  },
+  {
+    "id": "cl-002",
+    "category": "claims",
+    "title": "Checking Claim Status",
+    "content": "To check the status of a death claim, call Prudential's Customer Service Center at 1-800-496-1035, Monday through Friday, 8 AM to 8 PM ET. Have the policy number and claim reference information ready if available.",
+    "keywords": ["claim status", "where is my claim", "claim update", "how long claim"],
+    "agentNotes": "Pull claim in system before providing status. Set realistic timeline expectations."
+  },
+  {
+    "id": "cl-003",
+    "category": "claims",
+    "title": "FNOL Intake Best Practices",
+    "content": "First Notice of Loss intake should collect: policy number, date of death, relationship to insured, contact information, and whether certified death certificate is available. Validate coverage before promising payout timelines. Escalate complex beneficiary disputes or contested claims to claims specialist.",
+    "keywords": ["FNOL", "first notice", "claim intake", "initial report"],
+    "agentNotes": "Copilot use case: guide agent through structured FNOL checklist in real time."
+  }
+]

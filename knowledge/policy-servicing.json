@@ -1,0 +1,34 @@
+[
+  {
+    "id": "ps-001",
+    "category": "policy-servicing",
+    "title": "Transaction Status for Life Insurance",
+    "content": "View pending and completed transactions by logging into your account, selecting your policy, and choosing 'Transaction status' from Quick Actions. You can see pending transactions, payment history, and scheduled payments. High-level status updates are also available without full login if you have your policy number.",
+    "keywords": ["transaction", "pending", "payment status", "processing", "when will it post"],
+    "agentNotes": "Distinguish between pending vs completed. EFT payments may take 1-2 business days."
+  },
+  {
+    "id": "ps-002",
+    "category": "policy-servicing",
+    "title": "Changing Premium Payment Mode",
+    "content": "To change how often you pay premiums (monthly, quarterly, etc.), log into your account, select your policy, and choose 'Manage payments' from Quick Actions. You can also view pending transactions and scheduled payments from there.",
+    "keywords": ["payment mode", "monthly", "quarterly", "annual", "billing frequency"],
+    "agentNotes": "Mode changes may affect premium amount. Confirm new amount with customer."
+  },
+  {
+    "id": "ps-003",
+    "category": "policy-servicing",
+    "title": "eDelivery Enrollment",
+    "content": "Sign up for eDelivery online for a faster way to receive life insurance documents like annual statements, premium notices, and tax documents. Enroll through your online account profile settings.",
+    "keywords": ["edelivery", "paperless", "electronic documents", "statements", "go green"],
+    "agentNotes": "Promote eDelivery for faster document access and reduced mail delays."
+  },
+  {
+    "id": "ps-004",
+    "category": "policy-servicing",
+    "title": "Finding a Financial Professional",
+    "content": "To find a financial professional near you after moving or for policy questions, use the agent search tool on prudential.com or call Customer Service at 1-800-778-2255, Mon-Fri 8 AM-8 PM ET.",
+    "keywords": ["agent", "financial professional", "advisor", "find agent", "moved states"],
+    "agentNotes": "Agent search is self-service on website. Offer if customer prefers local support."
+  }
+]

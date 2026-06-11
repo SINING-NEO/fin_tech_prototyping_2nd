@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply text-pru-gray-dark;
+  }
+}
+
+@layer components {
+  .chat-bubble-user {
+    @apply bg-pru-red text-white rounded-2xl rounded-br-sm px-4 py-3 max-w-[85%] ml-auto;
+  }
+
+  .chat-bubble-assistant {
+    @apply bg-pru-gray-light text-pru-gray-dark rounded-2xl rounded-bl-sm px-4 py-3 max-w-[85%];
+  }
+
+  .copilot-card {
+    @apply bg-white border border-pru-gray-border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow;
+  }
+
+  .btn-primary {
+    @apply bg-pru-red hover:bg-pru-red-dark text-white font-medium px-5 py-2.5 rounded-full transition-colors;
+  }
+
+  .btn-secondary {
+    @apply bg-white hover:bg-gray-50 text-pru-gray-dark border border-pru-gray-border font-medium px-5 py-2.5 rounded-full transition-colors;
+  }
+
+  .btn-login {
+    @apply border border-pru-gray-border text-pru-gray-dark font-medium px-6 py-2 rounded-full hover:bg-gray-50 transition-colors text-sm;
+  }
+}
+
+@keyframes bounce-dot {
+  0%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-6px); }
+}
+
+.typing-dot {
+  animation: bounce-dot 1.4s infinite ease-in-out both;
+}
+.typing-dot:nth-child(1) { animation-delay: -0.32s; }
+.typing-dot:nth-child(2) { animation-delay: -0.16s; }

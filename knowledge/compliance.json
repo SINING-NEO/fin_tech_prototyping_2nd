@@ -1,0 +1,38 @@
+[
+  {
+    "id": "co-001",
+    "category": "compliance",
+    "title": "Identity Verification Requirements",
+    "content": "Before discussing policy-specific details, verify customer identity using policy number and additional verification factors. Do not discuss account details with unverified callers. For online actions, customers must authenticate through secure login.",
+    "keywords": ["verify", "identity", "authentication", "security"],
+    "complianceTags": ["PII", "verification"],
+    "agentNotes": "Never skip verification even if customer is frustrated. Document verification method used."
+  },
+  {
+    "id": "co-002",
+    "category": "compliance",
+    "title": "Tax and Financial Advice Disclaimer",
+    "content": "Prudential representatives must not provide tax, legal, or investment advice. When customers ask about tax implications of loans, withdrawals, or surrenders, explain that these actions may have tax consequences and recommend consulting a tax professional.",
+    "keywords": ["tax", "legal advice", "financial advice", "disclaimer"],
+    "complianceTags": ["tax-disclosure", "regulatory"],
+    "agentNotes": "Auto-trigger compliance card when loan/withdrawal/surrender keywords detected."
+  },
+  {
+    "id": "co-003",
+    "category": "compliance",
+    "title": "Sensitive Conversations Protocol",
+    "content": "Death claims, bereavement, and fraud concerns require human handling with empathy and care. AI should offer to connect to a specialist immediately. Never provide specific claim payout amounts without system verification. Document all disclosures made during the conversation.",
+    "keywords": ["sensitive", "escalation", "human handoff", "protocol"],
+    "complianceTags": ["escalation", "sensitive"],
+    "agentNotes": "Supervisor notification for legal threats or regulatory complaints."
+  },
+  {
+    "id": "co-004",
+    "category": "compliance",
+    "title": "Data Privacy in Chat",
+    "content": "Do not collect Social Security numbers, full bank account numbers, or passwords through chat. Direct customers to secure channels (logged-in portal or phone IVR) for payment and sensitive data entry.",
+    "keywords": ["SSN", "privacy", "bank account", "password", "PII"],
+    "complianceTags": ["PII", "data-privacy"],
+    "agentNotes": "Redact any PII accidentally shared. Warn customer not to share sensitive data in chat."
+  }
+]

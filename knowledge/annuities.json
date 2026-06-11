@@ -1,0 +1,18 @@
+[
+  {
+    "id": "an-001",
+    "category": "annuities",
+    "title": "Annuity Transaction Status",
+    "content": "View high-level transaction status updates without logging in, or log in for full details on pending and completed transactions. Annuities Customer Service mail: P.O. Box 7960, Philadelphia, PA 19176. For overnight mail: 160 Malone St., Millville, NJ 08332. Use the Annuities Virtual Chat Assistant on prudential.com for quick help.",
+    "keywords": ["annuity", "transaction status", "annuities", "withdrawal status"],
+    "agentNotes": "Fortitude Re customers are serviced by Prudential as third-party administrator — same annuity resources apply."
+  },
+  {
+    "id": "an-002",
+    "category": "annuities",
+    "title": "Annuity Customer Support",
+    "content": "For annuity questions, use the Annuities Virtual Chat Assistant on Prudential's website or contact the Annuities Service Center. Business hours for phone support are typically weekdays 8 AM to 6 PM ET. Have your contract number ready.",
+    "keywords": ["annuity help", "annuity contact", "contract number"],
+    "agentNotes": "Separate workflow from life insurance — confirm product type first."
+  }
+]

@@ -1,0 +1,34 @@
+[
+  {
+    "id": "oa-001",
+    "category": "online-access",
+    "title": "Enrolling in Online Account Access",
+    "content": "Register for Prudential Online Account Access at prudential.com. For enrollment help by phone, call 1-800-PRU-HELP (778-4357), Mon-Fri 8 AM-10 PM ET. Once enrolled, you can view policy values, manage beneficiaries, make payments, check transaction status, and access documents.",
+    "keywords": ["register", "enroll", "online account", "login", "sign up", "create account"],
+    "agentNotes": "Enrollment requires policy info for verification. Voice biometrics available for faster future verification."
+  },
+  {
+    "id": "oa-002",
+    "category": "online-access",
+    "title": "Self-Service Online Capabilities",
+    "content": "Through your online account for Individual Life Insurance: view death benefit, cash values, loan values, and beneficiary info; change address, email, and beneficiary; request loans; manage EFT payments; view annual statements, premium notices, and tax documents; check transaction status.",
+    "keywords": ["self service", "online", "what can I do", "account features"],
+    "agentNotes": "Guide customers to self-service first for routine tasks — reduces call volume."
+  },
+  {
+    "id": "oa-003",
+    "category": "online-access",
+    "title": "Secure Messaging",
+    "content": "After registering for an online account, use Prudential's secure messaging to communicate with customer service at your convenience. Available 24/7 for submitting requests and receiving responses without waiting on hold.",
+    "keywords": ["secure message", "message", "email support", "async"],
+    "agentNotes": "Secure messaging is preferred for non-urgent complex requests."
+  },
+  {
+    "id": "oa-004",
+    "category": "online-access",
+    "title": "Voice Biometrics",
+    "content": "Prudential offers voice biometrics enrollment for faster identity verification on future calls, reducing the need to answer security questions every time for routine inquiries.",
+    "keywords": ["voice biometric", "verification", "security", "identity"],
+    "agentNotes": "Voice biometrics speeds up repeat callers — mention during enrollment calls."
+  }
+]
