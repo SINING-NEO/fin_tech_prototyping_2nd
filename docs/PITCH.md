@@ -35,8 +35,8 @@
 1. Open `/chat` → select **Insurance** → **Health**
 2. Complete profiling → *"I'm worried about hospital bills"*
 3. Review matched plans with premiums
-4. Confidence meter → **Download summary**
-5. Open `/agent` → see **Customer Handoff Summary**
+4. Confidence meter → **Download summary** → **Keep chatting with PruAssist**
+5. (Separately) Financial Representative opens `/agent` → sees **Customer Handoff Summary**
 
 ---
 

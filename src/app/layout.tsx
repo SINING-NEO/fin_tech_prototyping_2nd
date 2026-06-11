@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+import { AuthProvider } from "@/context/AuthContext";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Prudential | Contact Us",
+  title: "Prudential | Insurance Navigator",
   description:
-    "Prudential conversational AI assistant and agent copilot prototype for insurance customer service",
+    "PruAssist Insurance Navigator for customers and Financial Representative Copilot portal",
 };
 
 export default function RootLayout({
@@ -15,7 +16,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased min-h-screen bg-white text-pru-gray-dark">
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

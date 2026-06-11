@@ -167,7 +167,7 @@ function mockCopilotResponse(
 
 export async function generateCustomerChat(
   messages: ChatMessage[],
-  sessionContext?: { policyNumber?: string; productLine?: string }
+  sessionContext?: { policyNumber?: string; productLine?: string; summarySnippet?: string }
 ): Promise<ChatResponse> {
   const lastQuery = getLastUserMessage(messages);
   const contexts = retrieveContext(lastQuery, 4);
@@ -186,7 +186,8 @@ RETRIEVED KNOWLEDGE (use as primary reference):
 ${contextBlock}
 
 ${sessionContext?.policyNumber ? `Customer policy number on file: ${sessionContext.policyNumber}` : ""}
-${sessionContext?.productLine ? `Product line: ${sessionContext.productLine}` : ""}`;
+${sessionContext?.productLine ? `Product line: ${sessionContext.productLine}` : ""}
+${sessionContext?.summarySnippet ? `Prior navigator summary: ${sessionContext.summarySnippet}` : ""}`;
 
   const completion = await client.chat.completions.create({
     model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",

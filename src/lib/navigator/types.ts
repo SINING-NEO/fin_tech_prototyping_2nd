@@ -7,7 +7,9 @@ export type NavigatorStep =
   | "compare"
   | "confidence"
   | "decision"
-  | "summary";
+  | "summary"
+  | "chat"
+  | "agent_chat";
 
 export type TopIntent = "Insurance" | "Investments" | "Rewards" | "Priority programmes";
 

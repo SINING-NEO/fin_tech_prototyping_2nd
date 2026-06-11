@@ -2,42 +2,11 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { MessageBubble, TypingIndicator } from "./MessageBubble";
+import { MessageBubble } from "./MessageBubble";
 import { AGENT_QUICK_ACTIONS } from "@/lib/prompts";
 import { CATEGORY_LABELS } from "@/lib/knowledge";
-import { loadHandoffFromStorage } from "@/lib/navigator/engine";
-import type { FrHandoffDocument } from "@/lib/navigator/types";
 import type { ChatMessage, CopilotResponse, CopilotSuggestion } from "@/lib/types";
-
-const SAMPLE_CONVERSATION: ChatMessage[] = [
-  {
-    id: "1",
-    role: "assistant",
-    content: "Hi! I'm PruAssist. How can I help you today?",
-    timestamp: new Date(Date.now() - 120000).toISOString(),
-  },
-  {
-    id: "2",
-    role: "user",
-    content:
-      "My father passed away last week and I think he had a Prudential life insurance policy. I don't know the policy number.",
-    timestamp: new Date(Date.now() - 90000).toISOString(),
-  },
-  {
-    id: "3",
-    role: "assistant",
-    content:
-      "I'm so sorry for your loss. I understand this is a difficult time. We can help you start the process even without the policy number. Do you know approximately when the policy was purchased, or do you have any documents that might reference Prudential?",
-    timestamp: new Date(Date.now() - 60000).toISOString(),
-  },
-  {
-    id: "4",
-    role: "user",
-    content:
-      "I found an old statement from 2019. It says term life but the policy number is faded. I can barely make out it starts with an M.",
-    timestamp: new Date(Date.now() - 30000).toISOString(),
-  },
-];
+import type { CustomerLiveSession } from "@/lib/session-store";
 
 const PRIORITY_STYLES: Record<string, string> = {
   high: "border-l-4 border-l-red-500",
@@ -55,6 +24,14 @@ const TYPE_ICONS: Record<CopilotSuggestion["type"], string> = {
   suitability: "🎯",
 };
 
+const STATUS_LABELS: Record<string, string> = {
+  waiting_for_agent: "Waiting",
+  live_with_agent: "Live",
+  ai_chat: "AI chat",
+  summary_ready: "Summary",
+  closed: "Closed",
+};
+
 function SuggestionCard({
   suggestion,
   onUse,
@@ -69,15 +46,10 @@ function SuggestionCard({
           <span>{TYPE_ICONS[suggestion.type]}</span>
           <h4 className="font-medium text-sm text-gray-900">{suggestion.title}</h4>
         </div>
-        <span className="text-xs text-gray-400 uppercase">{suggestion.type.replace("_", " ")}</span>
       </div>
       <p className="text-sm text-gray-600 mt-2 leading-relaxed">{suggestion.content}</p>
       {suggestion.type === "response_draft" && onUse && (
-        <button
-          type="button"
-          onClick={() => onUse(suggestion.content)}
-          className="mt-3 text-xs text-pru-red font-medium hover:underline"
-        >
+        <button type="button" onClick={() => onUse(suggestion.content)} className="mt-3 text-xs text-pru-red font-medium hover:underline">
           Copy to reply →
         </button>
       )}
@@ -86,248 +58,276 @@ function SuggestionCard({
 }
 
 export function AgentCopilotWorkspace() {
-  const [messages, setMessages] = useState<ChatMessage[]>(SAMPLE_CONVERSATION);
+  const [queue, setQueue] = useState<CustomerLiveSession[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [copilot, setCopilot] = useState<CopilotResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [agentInput, setAgentInput] = useState("");
   const [draftReply, setDraftReply] = useState("");
-  const [handoff, setHandoff] = useState<FrHandoffDocument | null>(null);
-  const fetchedRef = useRef(false);
+  const [liveInput, setLiveInput] = useState("");
+  const [queueError, setQueueError] = useState<string | null>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    setHandoff(loadHandoffFromStorage());
+  const selected = queue.find((s) => s.id === selectedId) ?? null;
+
+  const fetchQueue = useCallback(async () => {
+    try {
+      const res = await fetch("/api/sessions", { credentials: "same-origin" });
+      if (res.ok) {
+        const data = await res.json();
+        setQueue(data.sessions ?? []);
+        setQueueError(null);
+        return;
+      }
+      if (res.status === 403) {
+        setQueueError("Agent login required — log in from the landing page with password prudential2025.");
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setQueueError((data as { error?: string }).error ?? `Queue fetch failed (${res.status})`);
+      }
+    } catch {
+      setQueueError("Cannot reach local server — check that npm run dev is running.");
+    }
   }, []);
 
-  const fetchCopilot = useCallback(async (query?: string) => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/copilot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages, agentQuery: query }),
-      });
-      const data: CopilotResponse = await res.json();
-      setCopilot(data);
-    } catch {
-      setCopilot(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [messages]);
+  useEffect(() => {
+    fetchQueue();
+    const interval = setInterval(fetchQueue, 2000);
+    return () => clearInterval(interval);
+  }, [fetchQueue]);
 
   useEffect(() => {
-    if (!fetchedRef.current) {
-      fetchedRef.current = true;
-      fetchCopilot();
-    }
-  }, [fetchCopilot]);
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [selected?.liveMessages]);
 
-  function addAgentReply() {
+  const fetchCopilot = useCallback(
+    async (query?: string) => {
+      if (!selected) return;
+      setLoading(true);
+      const transcript: ChatMessage[] = selected.liveMessages.length
+        ? selected.liveMessages
+        : [
+            {
+              id: "ctx",
+              role: "user",
+              content: selected.navigator.concern ?? selected.handoff.customerSummary.needsIdentified.join(". "),
+              timestamp: selected.createdAt,
+            },
+          ];
+      try {
+        const res = await fetch("/api/copilot", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: transcript, agentQuery: query }),
+        });
+        const data: CopilotResponse = await res.json();
+        setCopilot(data);
+      } catch {
+        setCopilot(null);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [selected]
+  );
+
+  useEffect(() => {
+    if (selected) fetchCopilot();
+  }, [selected?.id, fetchCopilot]);
+
+  async function acceptCustomer(id: string) {
+    await fetch(`/api/sessions/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "accept" }),
+    });
+    setSelectedId(id);
+    await fetchQueue();
+  }
+
+  async function sendLiveReply() {
+    if (!selected || !liveInput.trim()) return;
+    const text = liveInput.trim();
+    setLiveInput("");
+    await fetch(`/api/sessions/${selected.id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: text, role: "agent" }),
+    });
+    await fetchQueue();
+  }
+
+  function applyDraftToLive() {
     if (!draftReply.trim()) return;
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: uuidv4(),
-        role: "assistant",
-        content: draftReply.trim(),
-        timestamp: new Date().toISOString(),
-      },
-    ]);
+    setLiveInput(draftReply);
     setDraftReply("");
-    setTimeout(() => fetchCopilot("Refresh suggestions after agent reply"), 500);
   }
-
-  function addSimulatedCustomerMessage(text: string) {
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: uuidv4(),
-        role: "user",
-        content: text,
-        timestamp: new Date().toISOString(),
-      },
-    ]);
-    setTimeout(() => fetchCopilot(), 500);
-  }
-
-  const sentimentColor = {
-    positive: "bg-green-100 text-green-800",
-    neutral: "bg-gray-100 text-gray-700",
-    concerned: "bg-amber-100 text-amber-800",
-    distressed: "bg-red-100 text-red-800",
-  };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-5 gap-0 h-[calc(100vh-7rem)]">
-      {/* Live conversation panel */}
-      <div className="lg:col-span-2 border-r border-gray-200 flex flex-col bg-white">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 h-[calc(100vh-3.5rem)]">
+      {/* Customer queue */}
+      <div className="lg:col-span-3 border-r border-gray-200 bg-white flex flex-col">
         <div className="px-4 py-3 border-b border-gray-200 bg-pru-red-light">
-          <h2 className="font-semibold text-pru-red-dark">Live Customer Chat</h2>
-          <p className="text-xs text-gray-500 mt-0.5">Simulated session — agent view</p>
+          <h2 className="font-semibold text-pru-red-dark text-sm">Customer Queue</h2>
+          <p className="text-xs text-gray-500">{queue.length} session(s) · same server</p>
+          {queueError && (
+            <p className="text-xs text-red-700 mt-1 bg-red-50 border border-red-100 rounded px-2 py-1">
+              {queueError}
+            </p>
+          )}
         </div>
-
-        <div className="flex-1 overflow-y-auto px-4 py-4">
-          {messages.map((msg) => (
-            <MessageBubble key={msg.id} message={msg} />
-          ))}
-        </div>
-
-        <div className="border-t border-gray-200 p-4 space-y-3">
-          <div>
-            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-              Agent reply draft
-            </label>
-            <textarea
-              value={draftReply}
-              onChange={(e) => setDraftReply(e.target.value)}
-              rows={3}
-              placeholder="Type or paste from copilot suggestion..."
-              className="w-full mt-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pru-red"
-            />
-          </div>
-          <div className="flex gap-2">
-            <button type="button" onClick={addAgentReply} className="btn-primary text-sm flex-1">
-              Send as Agent
-            </button>
-          </div>
-
-          <details className="text-sm">
-            <summary className="cursor-pointer text-gray-500 hover:text-pru-red">
-              Simulate customer message
-            </summary>
-            <div className="mt-2 space-y-1">
-              {[
-                "Yes, I have his social security number if that helps",
-                "How long does the claim process usually take?",
-                "Can I speak to someone about this in person?",
-              ].map((sim) => (
-                <button
-                  key={sim}
-                  type="button"
-                  onClick={() => addSimulatedCustomerMessage(sim)}
-                  className="block w-full text-left text-xs text-gray-600 hover:text-pru-red py-1"
+        <div className="flex-1 overflow-y-auto">
+          {queue.length === 0 && (
+            <p className="p-4 text-xs text-gray-500 leading-relaxed">
+              No customers in queue. Open the <strong>Customer portal</strong> in another tab,
+              complete the navigator, then click &quot;Chat live with Financial Representative&quot;.
+            </p>
+          )}
+          {queue.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setSelectedId(item.id)}
+              className={`w-full text-left px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors ${
+                selectedId === item.id ? "bg-pru-red-light border-l-4 border-l-pru-red" : ""
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-medium text-pru-gray-dark truncate">{item.customerLabel}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                    item.status === "waiting_for_agent"
+                      ? "bg-amber-100 text-amber-800"
+                      : item.status === "live_with_agent"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-gray-100 text-gray-600"
+                  }`}
                 >
-                  + {sim}
-                </button>
-              ))}
-            </div>
-          </details>
+                  {STATUS_LABELS[item.status] ?? item.status}
+                </span>
+              </div>
+              <p className="text-[10px] text-gray-500 mt-1 truncate">
+                {item.handoff.customerSummary.productsExplored.join(", ") || "No plans yet"}
+              </p>
+              <p className="text-[10px] text-gray-400 mt-0.5">
+                {new Date(item.updatedAt).toLocaleTimeString()}
+              </p>
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Copilot panel */}
-      <div className="lg:col-span-3 flex flex-col bg-gray-50">
-        <div className="px-4 py-3 border-b border-gray-200 bg-white flex items-center justify-between">
-          <div>
-            <h2 className="font-semibold text-pru-red-dark">Agent Copilot</h2>
-            <p className="text-xs text-gray-500">Real-time guidance powered by RAG + LLM</p>
+      {/* Live chat with selected customer */}
+      <div className="lg:col-span-4 border-r border-gray-200 flex flex-col bg-white">
+        {!selected ? (
+          <div className="flex-1 flex items-center justify-center text-sm text-gray-500 p-6 text-center">
+            Select a customer from the queue to view their summary and chat.
           </div>
-          <div className="flex items-center gap-2">
-            {copilot?.customerSentiment && (
-              <span
-                className={`text-xs px-2 py-1 rounded-full font-medium ${sentimentColor[copilot.customerSentiment]}`}
-              >
-                {copilot.customerSentiment}
-              </span>
+        ) : (
+          <>
+            <div className="px-4 py-3 border-b border-gray-200">
+              <h2 className="font-semibold text-sm text-pru-gray-dark">{selected.customerLabel}</h2>
+              {selected.status === "waiting_for_agent" && (
+                <button type="button" onClick={() => acceptCustomer(selected.id)} className="btn-primary text-xs mt-2">
+                  Accept &amp; start live chat
+                </button>
+              )}
+            </div>
+
+            <div className="px-4 py-2 bg-gray-50 border-b text-xs max-h-32 overflow-y-auto">
+              <p><strong>Needs:</strong> {selected.handoff.customerSummary.needsIdentified.join(" · ")}</p>
+              <p className="mt-1"><strong>Confidence:</strong> {selected.handoff.customerSummary.confidenceLevel}</p>
+              <p className="mt-1"><strong>Budget:</strong> {selected.handoff.customerSummary.estimatedBudgetRange}</p>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-4 py-3">
+              {selected.liveMessages.map((msg) => (
+                <MessageBubble
+                  key={msg.id}
+                  message={{
+                    ...msg,
+                    role: msg.role === "assistant" ? "assistant" : "user",
+                  }}
+                />
+              ))}
+              <div ref={bottomRef} />
+            </div>
+
+            {selected.status === "live_with_agent" && (
+              <div className="border-t border-gray-200 p-3 space-y-2">
+                <textarea
+                  value={draftReply}
+                  onChange={(e) => setDraftReply(e.target.value)}
+                  rows={2}
+                  placeholder="Copilot draft — edit before sending"
+                  className="w-full border rounded-lg px-3 py-2 text-xs"
+                />
+                <div className="flex gap-2">
+                  <input
+                    value={liveInput}
+                    onChange={(e) => setLiveInput(e.target.value)}
+                    placeholder="Reply to customer…"
+                    className="flex-1 border rounded-full px-3 py-2 text-sm"
+                    onKeyDown={(e) => e.key === "Enter" && sendLiveReply()}
+                  />
+                  <button type="button" onClick={sendLiveReply} className="btn-primary text-sm px-3">
+                    Send
+                  </button>
+                </div>
+                {draftReply && (
+                  <button type="button" onClick={applyDraftToLive} className="text-xs text-pru-red hover:underline">
+                    Use draft in reply →
+                  </button>
+                )}
+              </div>
             )}
-            <button
-              type="button"
-              onClick={() => fetchCopilot()}
-              disabled={loading}
-              className="btn-secondary text-sm py-1.5 px-3"
-            >
-              Refresh
-            </button>
+          </>
+        )}
+      </div>
+
+      {/* Copilot panel */}
+      <div className="lg:col-span-5 flex flex-col bg-gray-50">
+        <div className="px-4 py-3 border-b border-gray-200 bg-white flex justify-between items-center">
+          <div>
+            <h2 className="font-semibold text-pru-red-dark text-sm">AI Copilot</h2>
+            <p className="text-xs text-gray-500">Powered by customer summary + live context</p>
           </div>
+          <button type="button" onClick={() => fetchCopilot()} disabled={loading || !selected} className="btn-secondary text-xs py-1 px-2">
+            Refresh
+          </button>
         </div>
 
-        <div className="px-4 py-2 border-b border-gray-200 bg-white flex flex-wrap gap-2">
+        <div className="px-4 py-2 border-b bg-white flex flex-wrap gap-1">
           {AGENT_QUICK_ACTIONS.map((action) => (
             <button
               key={action}
               type="button"
               onClick={() => fetchCopilot(action)}
-              className="text-xs border border-gray-200 bg-gray-50 hover:bg-pru-red-light hover:border-pru-red text-gray-600 px-3 py-1.5 rounded-full transition-colors"
+              disabled={!selected}
+              className="text-[10px] border border-gray-200 px-2 py-1 rounded-full hover:border-pru-red disabled:opacity-40"
             >
               {action}
             </button>
           ))}
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {handoff && (
-            <div className="copilot-card border-l-4 border-l-pru-red bg-red-50">
-              <h3 className="font-semibold text-sm text-pru-red-dark">Customer Handoff Summary</h3>
-              <p className="text-xs text-gray-500 mt-1">
-                From Insurance Navigator · {new Date(handoff.generatedAt).toLocaleString()}
-              </p>
-              <div className="mt-3 text-xs text-gray-700 space-y-2">
-                <p><strong>Needs:</strong> {handoff.customerSummary.needsIdentified.join(" · ")}</p>
-                <p><strong>Plans considered:</strong> {handoff.plansConsidered.map((p) => p.name).join(", ") || "—"}</p>
-                <p><strong>Budget:</strong> {handoff.customerSummary.estimatedBudgetRange}</p>
-                <p><strong>Confidence:</strong> {handoff.customerSummary.confidenceLevel}</p>
-                <p><strong>Demographics:</strong> {handoff.demographics.ageRange}, {handoff.demographics.familySituation}, {handoff.demographics.budgetPreference}</p>
-                {handoff.outstandingQuestions.length > 0 && (
-                  <p><strong>Outstanding:</strong> {handoff.outstandingQuestions.join("; ")}</p>
-                )}
-                <p className="italic text-gray-500">{handoff.retentionNote}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setHandoff(loadHandoffFromStorage())}
-                className="mt-2 text-xs text-pru-red hover:underline"
-              >
-                Refresh handoff
-              </button>
-            </div>
-          )}
-
-          {loading && (
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <div className="w-4 h-4 border-2 border-pru-red border-t-transparent rounded-full animate-spin" />
-              Analyzing conversation...
-            </div>
-          )}
-
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          {!selected && <p className="text-sm text-gray-500">Select a customer to activate copilot.</p>}
+          {loading && <p className="text-sm text-gray-500">Analyzing…</p>}
           {copilot?.suggestions?.map((s, i) => (
-            <SuggestionCard
-              key={`${s.type}-${i}`}
-              suggestion={s}
-              onUse={(content) => setDraftReply(content)}
-            />
+            <SuggestionCard key={`${s.type}-${i}`} suggestion={s} onUse={(c) => setDraftReply(c)} />
           ))}
-
-          {copilot?.recommendedDisposition && (
-            <div className="copilot-card bg-pru-red-light border-pru-red">
-              <h4 className="font-medium text-sm text-pru-red-dark">Suggested Disposition</h4>
-              <p className="text-sm text-pru-red mt-1">{copilot.recommendedDisposition}</p>
-            </div>
-          )}
-
-          {copilot?.retrievedArticles && copilot.retrievedArticles.length > 0 && (
-            <div>
-              <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-                Knowledge Sources
-              </h3>
-              <div className="space-y-2">
-                {copilot.retrievedArticles.map((ctx) => (
-                  <div
-                    key={ctx.article.id}
-                    className="text-xs bg-white border border-gray-200 rounded p-3"
-                  >
-                    <span className="font-medium text-pru-red">{ctx.article.title}</span>
-                    <span className="text-gray-400 ml-2">
-                      {CATEGORY_LABELS[ctx.article.category] ?? ctx.article.category}
-                    </span>
-                    <p className="text-gray-600 mt-1 line-clamp-2">{ctx.article.content}</p>
-                  </div>
-                ))}
-              </div>
+          {selected && (
+            <div className="copilot-card text-xs">
+              <h4 className="font-medium">Full handoff summary</h4>
+              <p className="mt-2 text-gray-600"><strong>Demographics:</strong> {selected.handoff.demographics.ageRange}, {selected.handoff.demographics.familySituation}</p>
+              <p className="mt-1 text-gray-600"><strong>Plans:</strong> {selected.handoff.plansConsidered.map((p) => p.name).join(", ")}</p>
+              <p className="mt-1 text-gray-600"><strong>Outstanding:</strong> {selected.handoff.outstandingQuestions.join("; ") || "None"}</p>
             </div>
           )}
         </div>
 
-        <div className="border-t border-gray-200 bg-white p-4">
+        <div className="border-t bg-white p-3">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -337,13 +337,13 @@ export function AgentCopilotWorkspace() {
             className="flex gap-2"
           >
             <input
-              type="text"
               value={agentInput}
               onChange={(e) => setAgentInput(e.target.value)}
-              placeholder="Ask copilot: e.g. 'What docs needed for M-prefix policy claim?'"
-              className="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pru-red"
+              placeholder="Ask copilot about this customer…"
+              className="flex-1 border rounded-lg px-3 py-2 text-sm"
+              disabled={!selected}
             />
-            <button type="submit" className="btn-primary text-sm">
+            <button type="submit" className="btn-primary text-sm" disabled={!selected}>
               Ask
             </button>
           </form>

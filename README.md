@@ -28,12 +28,21 @@ See [`docs/DESIGN_PRINCIPLES.md`](docs/DESIGN_PRINCIPLES.md) for the full framew
 
 See [`docs/PITCH.md`](docs/PITCH.md) for the 1-minute elevator pitch.
 
+## Two portals
+
+| Portal | Login | Routes | Access |
+|--------|-------|--------|--------|
+| **Customer** | `/login` → Continue as Customer | `/`, `/chat` | Insurance Navigator + AI chat |
+| **Agent (FR)** | `/login?portal=agent` + password | `/agent` | Copilot workspace (protected) |
+
+**Demo agent password:** `prudential2025` (set `AGENT_DEMO_PASSWORD` in `.env.local`)
+
 ## What's included
 
 | Mode | Route | Purpose |
 |------|-------|---------|
 | **Insurance Navigator (PruAssist)** | `/chat` | Plain-language guide for customers; routes suitability to FR |
-| **Financial Representative Copilot** | `/agent` | Simplifies policy language, suitability prompts, compliance |
+| **Financial Representative Copilot** | `/agent` | Agent-only — handoffs, drafts, compliance |
 | **Landing** | `/` | Overview and architecture |
 
 ## Quick start

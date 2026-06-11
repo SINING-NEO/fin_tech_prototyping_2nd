@@ -38,3 +38,6 @@ next-env.d.ts
 
 # vector store cache
 /data/embeddings.json
+
+# local demo session store
+.demo-sessions.json

@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import { MessageBubble, TypingIndicator } from "./MessageBubble";
 import { SUGGESTED_STARTERS } from "@/lib/prompts";
 import type { ChatMessage, ChatResponse } from "@/lib/types";
+import type { FrHandoffDocument } from "@/lib/navigator/types";
 
 const WELCOME_MESSAGE: ChatMessage = {
   id: "welcome",
@@ -14,12 +15,30 @@ const WELCOME_MESSAGE: ChatMessage = {
   timestamp: new Date().toISOString(),
 };
 
+const POST_NAVIGATOR_WELCOME: ChatMessage = {
+  id: "post-nav-welcome",
+  role: "assistant",
+  content:
+    "Your summary is ready! I'm still here if you have more questions.\n\nAsk me to explain any plan in simpler terms, compare options, or help you prepare for a conversation with your Financial Representative.",
+  timestamp: new Date().toISOString(),
+};
+
 interface CustomerChatProps {
   compact?: boolean;
+  postNavigator?: boolean;
+  productLine?: string;
+  handoffContext?: FrHandoffDocument;
 }
 
-export function CustomerChat({ compact = false }: CustomerChatProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MESSAGE]);
+export function CustomerChat({
+  compact = false,
+  postNavigator = false,
+  productLine,
+  handoffContext,
+}: CustomerChatProps) {
+  const [messages, setMessages] = useState<ChatMessage[]>(
+    postNavigator ? [POST_NAVIGATOR_WELCOME] : [WELCOME_MESSAGE]
+  );
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [followUps, setFollowUps] = useState<string[]>([]);
@@ -53,7 +72,16 @@ export function CustomerChat({ compact = false }: CustomerChatProps) {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: updatedMessages, mode: "customer" }),
+        body: JSON.stringify({
+          messages: updatedMessages,
+          mode: "customer",
+          sessionContext: {
+            productLine: productLine ?? handoffContext?.customerSummary.needsIdentified[1],
+            summarySnippet: handoffContext
+              ? `Plans explored: ${handoffContext.customerSummary.productsExplored.join(", ")}. Budget: ${handoffContext.customerSummary.estimatedBudgetRange}. Confidence: ${handoffContext.customerSummary.confidenceLevel}.`
+              : undefined,
+          },
+        }),
       });
 
       const data: ChatResponse = await res.json();

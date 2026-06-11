@@ -59,5 +59,6 @@ export interface ChatRequest {
     policyNumber?: string;
     productLine?: string;
     customerName?: string;
+    summarySnippet?: string;
   };
 }
