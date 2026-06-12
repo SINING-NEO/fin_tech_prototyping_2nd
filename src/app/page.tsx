@@ -18,11 +18,11 @@ export default function LandingPage() {
               Poly-Fintech Prototype
             </p>
             <h1 className="mt-3 text-3xl sm:text-4xl font-bold text-pru-gray-dark">
-              Insurance Navigator Platform
+              Consultation Workflow Platform
             </h1>
             <p className="mt-4 text-gray-600 max-w-xl mx-auto leading-relaxed">
-              Choose your portal. Customer and agent views run locally on the same server
-              and connect in real time for live demonstration.
+              AI supports financial representatives in delivering clearer, more consistent insurance consultations —
+              from guided intake to live assistance and post-meeting summary.
             </p>
           </div>
 
@@ -31,9 +31,9 @@ export default function LandingPage() {
           <div className="mt-10 p-4 bg-white border border-pru-gray-border rounded-lg text-sm text-gray-600">
             <p className="font-medium text-pru-gray-dark mb-2">Demo tip — two tabs</p>
             <ol className="list-decimal ml-5 space-y-1 text-xs sm:text-sm">
-              <li>Use the <strong>same URL/port</strong> in both tabs (e.g. both on localhost:3000)</li>
-              <li>Tab 1: <strong>Customer</strong> → complete navigator → &quot;Chat live with Financial Representative&quot;</li>
-              <li>Tab 2: <strong>Agent</strong> (password <code className="text-pru-red">prudential2025</code>) → accept from queue → chat live</li>
+              <li><strong>Customer:</strong> Complete guided intake → book consultation → share Session ID</li>
+              <li><strong>Agent:</strong> Load Session ID or pick from queue → review pre-meeting brief → live consultation</li>
+              <li>End consultation → AI generates post-meeting summary for follow-up</li>
             </ol>
           </div>
         </div>

@@ -25,7 +25,11 @@ export async function syncCustomerSession(
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      return { error: (data as { error?: string }).error ?? `Sync failed (${res.status})` };
+      const apiError = (data as { error?: string }).error;
+      if (res.status === 503 && apiError) {
+        return { error: apiError };
+      }
+      return { error: apiError ?? `Sync failed (${res.status})` };
     }
     const data = await res.json();
     saveCustomerSessionId(navigator.id);

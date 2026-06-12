@@ -1,26 +1,9 @@
 import fs from "fs";
 import path from "path";
-import type { ChatMessage } from "./types";
-import type { FrHandoffDocument, NavigatorSession } from "./navigator/types";
-import { buildHandoffDocument } from "./navigator/engine";
-
-export type CustomerSessionStatus =
-  | "summary_ready"
-  | "ai_chat"
-  | "waiting_for_agent"
-  | "live_with_agent"
-  | "closed";
-
-export interface CustomerLiveSession {
-  id: string;
-  status: CustomerSessionStatus;
-  handoff: FrHandoffDocument;
-  navigator: NavigatorSession;
-  liveMessages: ChatMessage[];
-  customerLabel: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import type { ChatMessage } from "../types";
+import type { FrHandoffDocument, NavigatorSession } from "../navigator/types";
+import { buildHandoffDocument } from "../navigator/engine";
+import type { CustomerLiveSession, CustomerSessionStatus } from "./types";
 
 const STORE_FILE = path.join(process.cwd(), ".demo-sessions.json");
 
@@ -150,7 +133,19 @@ export function agentAcceptSession(id: string): CustomerLiveSession | undefined 
   return session;
 }
 
-/** Seed demo queue for agent portal when empty */
+export function closeSessionWithSummary(
+  id: string,
+  postMeetingSummary: import("../navigator/types").PostMeetingSummary
+): CustomerLiveSession | undefined {
+  const session = sessions.get(id);
+  if (!session) return undefined;
+  session.status = "closed";
+  session.postMeetingSummary = postMeetingSummary;
+  session.updatedAt = new Date().toISOString();
+  persistSessions(sessions);
+  return session;
+}
+
 export function seedDemoSessionsIfEmpty(): void {
   if (sessions.size > 0) return;
 

@@ -49,13 +49,13 @@ export function PortalChooser() {
         </div>
         <div className="p-6 flex-1 flex flex-col">
           <p className="text-sm text-gray-600 leading-relaxed">
-            Insurance Navigator, policy comparison, PruAssist AI chat, and live
-            connection to your Financial Representative.
+            Guided intake form with AI synthesis, consultation booking, and live connection
+            to your Financial Representative.
           </p>
           <ul className="mt-4 text-xs text-gray-500 space-y-1.5 flex-1">
-            <li>✓ Guided insurance journey</li>
-            <li>✓ Summary &amp; confidence meter</li>
-            <li>✓ Chat with AI or live agent</li>
+            <li>✓ Structured pre-consultation questionnaire</li>
+            <li>✓ AI Customer Insight Summary</li>
+            <li>✓ Live consultation &amp; post-meeting summary</li>
           </ul>
           <button
             type="button"
@@ -78,13 +78,13 @@ export function PortalChooser() {
           {!showAgentForm ? (
             <>
               <p className="text-sm text-gray-600 leading-relaxed">
-                Agent Copilot workspace — customer queue, live chat, handoff summaries,
-                and AI-assisted replies.
+                Pre-meeting briefing, live consultation assistant, policy consistency
+                checks, and post-meeting wrap-up notes.
               </p>
               <ul className="mt-4 text-xs text-gray-500 space-y-1.5 flex-1">
-                <li>✓ Multiple customer queue</li>
-                <li>✓ Live chat with customers</li>
-                <li>✓ Copilot drafts &amp; compliance</li>
+                <li>✓ Session ID brief retrieval</li>
+                <li>✓ Plan comparison infographic</li>
+                <li>✓ Real-time copilot &amp; compliance</li>
               </ul>
               <button
                 type="button"

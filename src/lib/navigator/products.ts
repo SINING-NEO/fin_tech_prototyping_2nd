@@ -10,6 +10,7 @@ export const PRODUCTS: InsuranceProduct[] = [
     limitations: "Waiting periods apply; pre-existing conditions may affect coverage",
     keywords: ["hospital", "medical", "health", "bills", "surgery", "ward"],
     premiumBase: 120,
+    coverageLevel: "Standard",
   },
   {
     id: "health-plus",
@@ -20,6 +21,7 @@ export const PRODUCTS: InsuranceProduct[] = [
     limitations: "Higher premium tier; co-payment may apply on some riders",
     keywords: ["specialist", "cancer", "integrated", "medical"],
     premiumBase: 180,
+    coverageLevel: "Comprehensive",
   },
   {
     id: "life-term",
@@ -30,6 +32,7 @@ export const PRODUCTS: InsuranceProduct[] = [
     limitations: "No cash value; coverage ends at term expiry unless renewed",
     keywords: ["death", "family", "income", "dependents", "protection", "life"],
     premiumBase: 85,
+    coverageLevel: "Basic",
   },
   {
     id: "life-whole",
@@ -87,6 +90,28 @@ export const INSURANCE_TYPES = [
   "Critical illness",
 ] as const;
 
+export const INTAKE_SECTIONS = [
+  { id: "profile" as const, label: "Profile", step: 1 },
+  { id: "financial" as const, label: "Financial context", step: 2 },
+  { id: "understanding" as const, label: "Understanding", step: 3 },
+  { id: "intent" as const, label: "Your need", step: 4 },
+  { id: "concerns" as const, label: "Key concerns", step: 5 },
+];
+
+export const CONSULTATION_INTENTS = [
+  "Hospitalisation coverage",
+  "Critical illness",
+  "Investment-linked",
+  "Not sure yet",
+] as const;
+
+export const KEY_CONCERNS = [
+  "High hospital bills",
+  "Long-term protection",
+  "Affordability",
+  "Family protection",
+] as const;
+
 export const PROFILING_OPTIONS = {
   ageRange: ["18-25", "26-35", "36-45", "46-55", "56+"],
   familySituation: [
@@ -95,7 +120,9 @@ export const PROFILING_OPTIONS = {
     "Married with children",
     "Supporting parents",
   ],
+  employmentType: ["Employed", "Self-employed", "Student", "Retired", "Prefer not to say"],
   budgetPreference: ["Budget-conscious", "Balanced", "Premium coverage"],
+  existingCoverage: ["None", "Basic employer plan", "Integrated shield", "Multiple policies"],
   englishProficiency: ["Basic", "Intermediate", "Fluent"],
   insuranceFamiliarity: ["New to insurance", "Some experience", "Very familiar"],
 } as const;

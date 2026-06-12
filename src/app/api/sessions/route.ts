@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   listCustomerSessions,
   upsertCustomerSession,
+  getSessionStoreMode,
+  getSessionStoreError,
 } from "@/lib/session-store";
 import { buildHandoffDocument } from "@/lib/navigator/engine";
 import type { CustomerSessionStatus } from "@/lib/session-store";
@@ -14,22 +16,38 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Agent access required" }, { status: 403 });
   }
 
-  const sessions = listCustomerSessions();
-  return NextResponse.json({
-    sessions: sessions.map((s) => ({
-      id: s.id,
-      status: s.status,
-      customerLabel: s.customerLabel,
-      handoff: s.handoff,
-      navigator: s.navigator,
-      liveMessages: s.liveMessages,
-      createdAt: s.createdAt,
-      updatedAt: s.updatedAt,
-    })),
-  });
+  const storeError = getSessionStoreError();
+  if (storeError) {
+    return NextResponse.json({ error: storeError, storeMode: getSessionStoreMode() }, { status: 503 });
+  }
+
+  try {
+    const sessions = await listCustomerSessions();
+    return NextResponse.json({
+      storeMode: getSessionStoreMode(),
+      sessions: sessions.map((s) => ({
+        id: s.id,
+        status: s.status,
+        customerLabel: s.customerLabel,
+        handoff: s.handoff,
+        navigator: s.navigator,
+        liveMessages: s.liveMessages,
+        createdAt: s.createdAt,
+        updatedAt: s.updatedAt,
+      })),
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to load sessions";
+    return NextResponse.json({ error: message, storeMode: getSessionStoreMode() }, { status: 503 });
+  }
 }
 
 export async function POST(request: NextRequest) {
+  const storeError = getSessionStoreError();
+  if (storeError) {
+    return NextResponse.json({ error: storeError, storeMode: getSessionStoreMode() }, { status: 503 });
+  }
+
   try {
     const body = await request.json();
     const navigator = body.navigator as NavSession;
@@ -40,10 +58,11 @@ export async function POST(request: NextRequest) {
     }
 
     const handoff = buildHandoffDocument(navigator);
-    const session = upsertCustomerSession(navigator, handoff, status);
+    const session = await upsertCustomerSession(navigator, handoff, status);
 
-    return NextResponse.json({ session });
-  } catch {
-    return NextResponse.json({ error: "Failed to save session" }, { status: 500 });
+    return NextResponse.json({ session, storeMode: getSessionStoreMode() });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to save session";
+    return NextResponse.json({ error: message, storeMode: getSessionStoreMode() }, { status: 503 });
   }
 }

@@ -11,9 +11,9 @@ export default function ChatPage() {
       </div>
       <div className="max-w-2xl mx-auto h-[calc(100vh-12rem)] bg-white rounded-2xl shadow-chat border border-pru-gray-border overflow-hidden flex flex-col">
         <div className="px-5 py-4 bg-pru-red text-white flex-shrink-0">
-          <h1 className="font-semibold text-lg">Need help? Talk to us</h1>
+          <h1 className="font-semibold text-lg">Pre-consultation intake</h1>
           <p className="text-xs text-red-100 mt-0.5">
-            Customer portal — connected locally to agent workspace
+            Guided intake form with AI synthesis — prepares your Financial Representative before the meeting
           </p>
         </div>
         <div className="flex-1 min-h-0">

@@ -45,6 +45,28 @@ See [`docs/PITCH.md`](docs/PITCH.md) for the 1-minute elevator pitch.
 | **Financial Representative Copilot** | `/agent` | Agent-only — handoffs, drafts, compliance |
 | **Landing** | `/` | Overview and architecture |
 
+## Deploy to Vercel (share with friends)
+
+The customer ↔ agent live queue **does not work on Vercel with file storage alone**. Vercel runs stateless serverless functions — each request may hit a different instance, and the filesystem is not shared.
+
+**Fix:** Add a free [Upstash Redis](https://upstash.com) database (or Vercel KV from the Vercel marketplace):
+
+1. Create an Upstash Redis database (free tier is enough for demos).
+2. In your **Vercel project → Settings → Environment Variables**, add:
+   - `UPSTASH_REDIS_REST_URL` — from Upstash dashboard
+   - `UPSTASH_REDIS_REST_TOKEN` — from Upstash dashboard
+   - `USE_MOCK_LLM=true` — so friends can try without an OpenAI key
+   - `AGENT_DEMO_PASSWORD=prudential2025` — agent portal password
+3. **Redeploy** the project after saving env vars.
+
+Locally, sessions still save to `.demo-sessions.json` when Redis is not configured.
+
+| Environment | Session store | Live queue works? |
+|-------------|---------------|-------------------|
+| `npm run dev` (local) | `.demo-sessions.json` | Yes — same machine |
+| Vercel **without** Redis | None (unavailable) | No — shows setup error |
+| Vercel **with** Upstash Redis | Shared Redis | Yes — works for all visitors |
+
 ## Quick start
 
 ### 1. Install dependencies

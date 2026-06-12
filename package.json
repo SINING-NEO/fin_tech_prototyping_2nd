@@ -10,6 +10,7 @@
     "ingest": "tsx scripts/ingest-knowledge.ts"
   },
   "dependencies": {
+    "@upstash/redis": "^1.38.0",
     "next": "^15.1.0",
     "openai": "^4.77.0",
     "react": "^19.0.0",
