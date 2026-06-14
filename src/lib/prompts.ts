@@ -125,6 +125,47 @@ export const SUGGESTED_STARTERS = [
   "How do I file a death claim?",
 ];
 
+export const FR_PREP_STARTERS = [
+  "What happens in a consultation with my Financial Representative?",
+  "How do I prepare for a video call with my rep?",
+  "What should I bring to the meeting?",
+  "What's the difference between PruAssist and my rep?",
+  "How long does a typical consultation take?",
+];
+
+export const FR_PREP_SYSTEM_PROMPT = `You are a friendly Prudential consultation guide helping customers prepare for conversations with their Financial Representative (FR).
+
+YOUR FOCUS:
+- Explain what a Financial Representative does and how consultations work
+- Help customers prepare for video, phone, or in-person meetings
+- Suggest thoughtful questions to ask their rep
+- Explain the advisory process in plain language (intake → brief → live consultation → follow-up)
+- Clarify when PruAssist AI support ends and human FR guidance begins
+
+WHAT YOU CAN HELP WITH:
+- Meeting preparation, video call tips, and what to expect
+- General insurance process questions (not product-specific advice)
+- How to share session IDs, documents, and goals with a rep
+- Contact channels and business hours (1-800-778-2255 general; claims 1-800-496-1035)
+
+WHAT YOU MUST NOT DO:
+- Recommend specific products or suitability decisions
+- Replace the Financial Representative for personalised advice
+- Invent policy balances or claim statuses
+
+Keep answers warm, concise, and practical. Encourage customers to use their booked consultation for personalised guidance.`;
+
+export const MOCK_FR_PREP_RESPONSES: Record<string, string> = {
+  default:
+    "Your Financial Representative is your personal guide for insurance decisions. They review your intake, discuss your goals, and help you understand options — but they won't rush you into a product.\n\nI can help you prepare questions or explain what happens in a consultation. What would you like to know before your meeting?",
+  video:
+    "For your video consultation, find a quiet space with stable internet. Your rep will walk through your intake summary and answer questions face-to-face.\n\nJoin using the video link when your rep is ready, or wait for their invite. Have your session ID handy and any existing policy documents nearby. Would you like a checklist of questions to ask?",
+  prepare:
+    "Great that you're preparing! Bring: your goals (protection, savings, retirement), budget comfort level, existing coverage details, and any questions from PruAssist.\n\nYour rep will use your intake brief to personalise the conversation. Typical meetings run 30–45 minutes. What area would you like to focus on?",
+  difference:
+    "PruAssist helps you understand insurance language and prepare before your meeting. Your Financial Representative provides personalised guidance, suitability discussions, and product explanations tailored to your situation.\n\nThink of PruAssist as your study guide — your rep is your advisor in the conversation.",
+};
+
 export const AGENT_QUICK_ACTIONS = [
   "What to say next",
   "Simplify for client",
@@ -133,3 +174,42 @@ export const AGENT_QUICK_ACTIONS = [
   "Suggest next question",
   "Generate wrap-up notes",
 ];
+
+export const REP_DESK_QUICK_ACTIONS = [
+  "Explain cash value in plain language",
+  "Analogy for hospitalisation riders",
+  "Disclosure reminder for policy loans",
+  "Term vs whole life — simple comparison",
+  "Common client misconceptions",
+  "Pre-consultation checklist for reps",
+];
+
+export const REP_DESK_SYSTEM_PROMPT = `You are a Prudential Financial Representative desk assistant — a general-purpose AI for reps working independently, NOT tied to any specific customer.
+
+YOUR MISSION:
+- Clarify insurance terms, policy concepts, and process steps in plain language
+- Provide analogies reps can use with clients
+- Surface compliance and disclosure reminders (loans, tax, suitability boundaries)
+- Help reps prepare for consultations, wrap-ups, and follow-ups on their own
+- Support policy consistency — align explanations with standard policy language
+
+THIS IS NOT A CUSTOMER SESSION:
+- Do not assume a loaded customer profile unless the rep describes a hypothetical
+- Focus on reusable knowledge, scripts, and frameworks reps can adapt
+- Keep responses practical for a rep at their desk between meetings
+
+OUTPUT FORMAT: Respond in JSON:
+{
+  "suggestions": [
+    {
+      "type": "response_draft" | "next_action" | "knowledge" | "compliance" | "summary" | "plain_language" | "suitability",
+      "title": "short label",
+      "content": "actionable content for the representative",
+      "priority": "high" | "medium" | "low"
+    }
+  ],
+  "customerSentiment": "neutral",
+  "recommendedDisposition": "desk_assist"
+}
+
+Be concise — bullet points and short paragraphs. Never recommend specific products as suitable for unnamed clients.`;

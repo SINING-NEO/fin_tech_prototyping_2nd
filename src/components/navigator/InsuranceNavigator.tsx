@@ -7,6 +7,7 @@ import { CustomerChat } from "@/components/CustomerChat";
 import { SummaryPanel } from "./SummaryPanel";
 import { PlanComparisonInfographic } from "./PlanComparisonInfographic";
 import { PostMeetingSummaryPanel } from "./PostMeetingSummaryPanel";
+import { CustomerFrResourcesPanel } from "./CustomerFrResourcesPanel";
 import { ConnectionStatus } from "@/components/ConnectionStatus";
 import { syncCustomerSession, requestAgentChat } from "@/lib/navigator/session-api";
 import {
@@ -204,6 +205,10 @@ export function InsuranceNavigator({ compact = false }: InsuranceNavigatorProps)
     await requestAgentChat(next.id);
   }
 
+  async function startFrPrepChat() {
+    setSession((s) => ({ ...s, phase: "fr_prep_chat", updatedAt: new Date().toISOString() }));
+  }
+
   async function startAiChat() {
     const doc = handoff ?? buildHandoffDocument(session);
     setHandoffDoc(doc);
@@ -229,13 +234,44 @@ export function InsuranceNavigator({ compact = false }: InsuranceNavigatorProps)
           px={px}
           active="post_meeting"
           showLive
+          showFrPrep
           onSelect={(p) => {
             if (p === "ai_chat") void startAiChat();
+            else if (p === "fr_prep_chat") void startFrPrepChat();
             else setSession((s) => ({ ...s, phase: p, updatedAt: new Date().toISOString() }));
           }}
         />
         <div className={`flex-1 overflow-y-auto ${px} py-4`}>
           <PostMeetingSummaryPanel summary={postSummary} sessionId={session.id} role="customer" />
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === "fr_prep_chat") {
+    const chatHandoff = handoff ?? buildHandoffDocument(session);
+    return (
+      <div className="flex flex-col h-full bg-white">
+        <CustomerPhaseNav
+          px={px}
+          active="fr_prep_chat"
+          showLive={Boolean(handoffDoc)}
+          showFrPrep
+          onSelect={(p) => {
+            if (p === "ai_chat") void startAiChat();
+            else setSession((s) => ({ ...s, phase: p, updatedAt: new Date().toISOString() }));
+          }}
+        />
+        <div className={`${px} py-2 flex-shrink-0 border-b border-pru-gray-border overflow-y-auto max-h-[40%]`}>
+          <CustomerFrResourcesPanel compact sessionId={handoffDoc ? session.id : undefined} />
+        </div>
+        <div className="flex-1 min-h-0">
+          <CustomerChat
+            compact={compact}
+            variant="fr_prep"
+            productLine={session.consultationIntent ?? session.insuranceType}
+            handoffContext={chatHandoff}
+          />
         </div>
       </div>
     );
@@ -249,6 +285,7 @@ export function InsuranceNavigator({ compact = false }: InsuranceNavigatorProps)
           px={px}
           active="ai_chat"
           showLive={Boolean(handoffDoc)}
+          showFrPrep={Boolean(handoffDoc)}
           onSelect={(p) => setSession((s) => ({ ...s, phase: p, updatedAt: new Date().toISOString() }))}
         />
         <div className={`${px} py-2 flex-shrink-0 border-b border-pru-gray-border`}>
@@ -275,16 +312,19 @@ export function InsuranceNavigator({ compact = false }: InsuranceNavigatorProps)
           px={px}
           active="live"
           showLive
+          showFrPrep
           onSelect={(p) => {
             if (p === "ai_chat") void startAiChat();
+            else if (p === "fr_prep_chat") void startFrPrepChat();
             else setSession((s) => ({ ...s, phase: p, updatedAt: new Date().toISOString() }));
           }}
         />
         <div className={`${px} py-2 bg-green-50 border-b border-green-100 flex-shrink-0 space-y-2`}>
           <p className="text-xs font-medium text-green-900">Step 3 · Live consultation with your Financial Representative</p>
           <ConnectionStatus role="customer" sessionId={session.id} />
+          <CustomerFrResourcesPanel compact showVideo showInfo={false} sessionId={session.id} />
         </div>
-        <div className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 flex flex-col">
           <LiveAgentChat sessionId={session.id} compact={compact} />
         </div>
       </div>
@@ -298,12 +338,14 @@ export function InsuranceNavigator({ compact = false }: InsuranceNavigatorProps)
           px={px}
           active="waiting"
           showLive
+          showFrPrep
           onSelect={(p) => {
             if (p === "ai_chat") void startAiChat();
+            else if (p === "fr_prep_chat") void startFrPrepChat();
             else setSession((s) => ({ ...s, phase: p, updatedAt: new Date().toISOString() }));
           }}
         />
-        <div className={`${px} py-4 flex-1`}>
+        <div className={`${px} py-4 flex-1 min-h-0 overflow-y-auto space-y-4`}>
         <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
           <p className="text-xs font-medium text-amber-900 uppercase tracking-wide">Consultation booked</p>
           <h3 className="font-bold text-lg text-amber-950 mt-1">Your Financial Representative is preparing</h3>
@@ -316,6 +358,9 @@ export function InsuranceNavigator({ compact = false }: InsuranceNavigatorProps)
           <ConnectionStatus role="customer" sessionId={session.id} />
           {syncError && <p className="text-xs text-red-600 mt-2">{syncError}</p>}
         </div>
+
+        <CustomerFrResourcesPanel sessionId={session.id} />
+
         {handoff && (
           <div className="mt-4 space-y-3">
             <p className="text-xs text-gray-500">Preview of what your rep sees:</p>
@@ -328,8 +373,11 @@ export function InsuranceNavigator({ compact = false }: InsuranceNavigatorProps)
             <PlanComparisonInfographic products={session.matchedProducts} compact />
           </div>
         )}
-        <button type="button" onClick={() => void joinLiveConsultation()} className="btn-primary w-full mt-4 text-sm">
+        <button type="button" onClick={() => void joinLiveConsultation()} className="btn-primary w-full text-sm">
           Join live consultation when rep is ready →
+        </button>
+        <button type="button" onClick={() => void startFrPrepChat()} className="w-full text-sm border border-pru-red text-pru-red py-2.5 rounded-full hover:bg-pru-red-light">
+          Ask AI about meeting your rep →
         </button>
         </div>
       </div>
@@ -367,12 +415,19 @@ export function InsuranceNavigator({ compact = false }: InsuranceNavigatorProps)
           <PlanComparisonInfographic products={session.matchedProducts} />
         </div>
 
+        <div className="mt-4">
+          <CustomerFrResourcesPanel compact sessionId={session.id} />
+        </div>
+
         <div className="mt-4 space-y-2">
           <button type="button" onClick={() => void bookConsultation()} className="btn-primary w-full text-sm">
             Book consultation with Financial Representative →
           </button>
           <button type="button" onClick={() => void startAiChat()} className="w-full text-sm border border-pru-red text-pru-red py-2.5 rounded-full hover:bg-pru-red-light">
             Keep chatting with PruAssist AI →
+          </button>
+          <button type="button" onClick={() => void startFrPrepChat()} className="w-full text-sm border border-gray-300 text-gray-700 py-2.5 rounded-full hover:bg-gray-50">
+            Ask AI about your Financial Representative →
           </button>
           <button type="button" onClick={() => downloadSummaryPdf(handoff)} className="btn-secondary w-full text-sm">
             Download intake summary
@@ -500,16 +555,19 @@ function CustomerPhaseNav({
   px,
   active,
   showLive,
+  showFrPrep,
   onSelect,
 }: {
   px: string;
   active: ConsultationPhase;
   showLive?: boolean;
+  showFrPrep?: boolean;
   onSelect: (phase: ConsultationPhase) => void;
 }) {
   const tabs: { id: ConsultationPhase; label: string; show?: boolean }[] = [
     { id: "intake_review", label: "Summary" },
     { id: "ai_chat", label: "PruAssist AI" },
+    { id: "fr_prep_chat", label: "FR Q&A", show: showFrPrep },
     { id: "waiting", label: "Waiting", show: showLive },
     { id: "live", label: "Live FR", show: showLive },
     { id: "post_meeting", label: "Wrap-up", show: active === "post_meeting" },

@@ -13,7 +13,7 @@ export default function ChatPage() {
         <div className="px-5 py-4 bg-pru-red text-white flex-shrink-0">
           <h1 className="font-semibold text-lg">Pre-consultation intake</h1>
           <p className="text-xs text-red-100 mt-0.5">
-            Guided intake form with AI synthesis — prepares your Financial Representative before the meeting
+            Guided intake · PruAssist AI · video links · FR Q&A — prepares your Financial Representative
           </p>
         </div>
         <div className="flex-1 min-h-0">

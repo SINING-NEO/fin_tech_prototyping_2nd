@@ -3,8 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { MessageBubble, TypingIndicator } from "./MessageBubble";
-import { SUGGESTED_STARTERS } from "@/lib/prompts";
-import type { ChatMessage, ChatResponse } from "@/lib/types";
+import { SUGGESTED_STARTERS, FR_PREP_STARTERS } from "@/lib/prompts";
+import type { ChatMessage, ChatResponse, CustomerChatVariant } from "@/lib/types";
 import type { FrHandoffDocument, PruAssistChatSummary } from "@/lib/navigator/types";
 import { syncAiChatMessages } from "@/lib/navigator/session-api";
 import { buildPruAssistChatSummary } from "@/lib/navigator/engine";
@@ -26,6 +26,14 @@ const POST_NAVIGATOR_WELCOME: ChatMessage = {
   timestamp: new Date().toISOString(),
 };
 
+const FR_PREP_WELCOME: ChatMessage = {
+  id: "fr-prep-welcome",
+  role: "assistant",
+  content:
+    "Hi! I'm here to help you prepare for your consultation with a Financial Representative.\n\nI can explain what to expect, how video consultations work, what to bring, and questions worth asking — but your rep will give personalised guidance during the live session.\n\nWhat would you like to know before your meeting?",
+  timestamp: new Date().toISOString(),
+};
+
 interface CustomerChatProps {
   compact?: boolean;
   postNavigator?: boolean;
@@ -33,6 +41,7 @@ interface CustomerChatProps {
   handoffContext?: FrHandoffDocument;
   sessionId?: string;
   navigatorSession?: import("@/lib/navigator/types").NavigatorSession;
+  variant?: CustomerChatVariant;
 }
 
 export function CustomerChat({
@@ -42,10 +51,17 @@ export function CustomerChat({
   handoffContext,
   sessionId,
   navigatorSession,
+  variant = "general",
 }: CustomerChatProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>(
-    postNavigator ? [POST_NAVIGATOR_WELCOME] : [WELCOME_MESSAGE]
-  );
+  const isFrPrep = variant === "fr_prep";
+  const initialWelcome = isFrPrep
+    ? FR_PREP_WELCOME
+    : postNavigator
+      ? POST_NAVIGATOR_WELCOME
+      : WELCOME_MESSAGE;
+  const starters = isFrPrep ? FR_PREP_STARTERS : SUGGESTED_STARTERS;
+
+  const [messages, setMessages] = useState<ChatMessage[]>([initialWelcome]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [followUps, setFollowUps] = useState<string[]>([]);
@@ -63,7 +79,7 @@ export function CustomerChat({
   }, [messages, loading]);
 
   async function persistChatSummary(updatedMessages: ChatMessage[]) {
-    if (!sessionId || !navigatorSession) return;
+    if (isFrPrep || !sessionId || !navigatorSession) return;
     const summary = buildPruAssistChatSummary(navigatorSession, updatedMessages);
     setChatSummary(summary);
     const ok = await syncAiChatMessages(sessionId, updatedMessages);
@@ -94,6 +110,7 @@ export function CustomerChat({
         body: JSON.stringify({
           messages: updatedMessages,
           mode: "customer",
+          variant,
           sessionContext: {
             productLine: productLine ?? handoffContext?.customerSummary.needsIdentified[1],
             summarySnippet: handoffContext
@@ -139,7 +156,7 @@ export function CustomerChat({
 
   return (
     <div className="flex flex-col h-full bg-white">
-      {chatSummary && chatSummary.messageCount > 1 && (
+      {chatSummary && chatSummary.messageCount > 1 && !isFrPrep && (
         <div className={`flex-shrink-0 ${compact ? "px-3 pt-3" : "px-4 pt-4"}`}>
           <PruAssistChatSummaryPanel summary={chatSummary} compact={compact} role="customer" />
           {summarySynced && (
@@ -193,7 +210,7 @@ export function CustomerChat({
 
       {messages.length <= 1 && (
         <div className="px-3 sm:px-4 pb-2 flex flex-wrap gap-1.5">
-          {SUGGESTED_STARTERS.slice(0, compact ? 3 : 4).map((s) => (
+          {starters.slice(0, compact ? 3 : 4).map((s) => (
             <button
               key={s}
               type="button"

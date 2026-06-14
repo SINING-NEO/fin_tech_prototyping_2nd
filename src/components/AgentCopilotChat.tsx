@@ -3,19 +3,27 @@
 import { useState, useRef, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { MessageBubble, TypingIndicator } from "./MessageBubble";
-import { AGENT_QUICK_ACTIONS } from "@/lib/prompts";
-import type { ChatMessage, CopilotResponse, CopilotSuggestion } from "@/lib/types";
+import { AGENT_QUICK_ACTIONS, REP_DESK_QUICK_ACTIONS } from "@/lib/prompts";
+import type { ChatMessage, CopilotResponse, CopilotSuggestion, CopilotVariant } from "@/lib/types";
 import type { FrHandoffDocument } from "@/lib/navigator/types";
 
-const WELCOME: ChatMessage = {
+const SESSION_WELCOME: ChatMessage = {
   id: "copilot-welcome",
   role: "assistant",
   content:
-    "I'm your AI Copilot. Ask me anything about this customer — talking points, plain-language explanations, policy consistency checks, or what to say next.\n\nI support your consultation; I don't replace suitability advice.",
+    "I'm your Live Assist copilot for this customer session. Ask about talking points, plain-language explanations, policy consistency, or what to say next.\n\nI support your consultation — I don't replace suitability advice.",
   timestamp: new Date().toISOString(),
 };
 
-function formatCopilotReply(response: CopilotResponse, query: string): string {
+const REP_DESK_WELCOME: ChatMessage = {
+  id: "rep-desk-welcome",
+  role: "assistant",
+  content:
+    "Welcome to Rep Desk — your general assistant, not tied to any customer.\n\nClarify insurance terms, get analogies, disclosure reminders, or prep checklists on your own. Switch to Live Assist when you're with a specific client.",
+  timestamp: new Date().toISOString(),
+};
+
+function formatCopilotReply(response: CopilotResponse): string {
   const parts: string[] = [];
   const draft = response.suggestions.find((s) => s.type === "response_draft");
   if (draft) parts.push(draft.content);
@@ -28,10 +36,10 @@ function formatCopilotReply(response: CopilotResponse, query: string): string {
   }
 
   if (parts.length === 0) {
-    parts.push(response.suggestions[0]?.content ?? "Review the suggestions below for this situation.");
+    parts.push(response.suggestions[0]?.content ?? "Review the suggestions below.");
   }
 
-  if (response.customerSentiment) {
+  if (response.customerSentiment && response.customerSentiment !== "neutral") {
     parts.push(`\nCustomer sentiment: ${response.customerSentiment}.`);
   }
 
@@ -39,6 +47,7 @@ function formatCopilotReply(response: CopilotResponse, query: string): string {
 }
 
 interface AgentCopilotChatProps {
+  mode?: CopilotVariant;
   handoff?: FrHandoffDocument;
   customerLabel?: string;
   liveTranscript?: ChatMessage[];
@@ -46,12 +55,18 @@ interface AgentCopilotChatProps {
 }
 
 export function AgentCopilotChat({
+  mode = "session",
   handoff,
   customerLabel,
   liveTranscript = [],
   onUseDraft,
 }: AgentCopilotChatProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([WELCOME]);
+  const isGeneral = mode === "general";
+  const quickActions = isGeneral ? REP_DESK_QUICK_ACTIONS : AGENT_QUICK_ACTIONS;
+
+  const [messages, setMessages] = useState<ChatMessage[]>(
+    isGeneral ? [REP_DESK_WELCOME] : [SESSION_WELCOME]
+  );
   const [lastSuggestions, setLastSuggestions] = useState<CopilotSuggestion[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -62,6 +77,11 @@ export function AgentCopilotChat({
   }, [messages, loading]);
 
   useEffect(() => {
+    if (isGeneral) {
+      setMessages([REP_DESK_WELCOME]);
+      setLastSuggestions([]);
+      return;
+    }
     if (handoff && customerLabel) {
       setMessages([
         {
@@ -71,8 +91,10 @@ export function AgentCopilotChat({
           timestamp: new Date().toISOString(),
         },
       ]);
+    } else {
+      setMessages([SESSION_WELCOME]);
     }
-  }, [handoff?.sessionId, customerLabel]);
+  }, [isGeneral, handoff?.sessionId, customerLabel]);
 
   async function sendMessage(text: string) {
     if (!text.trim() || loading) return;
@@ -89,8 +111,9 @@ export function AgentCopilotChat({
     setLoading(true);
     setLastSuggestions([]);
 
-    const contextMessages: ChatMessage[] =
-      liveTranscript.length > 0
+    const contextMessages: ChatMessage[] = isGeneral
+      ? []
+      : liveTranscript.length > 0
         ? liveTranscript
         : handoff
           ? [
@@ -103,18 +126,23 @@ export function AgentCopilotChat({
             ]
           : [];
 
+    const chatHistory = updated.filter(
+      (m) => !["copilot-welcome", "ctx-welcome", "rep-desk-welcome"].includes(m.id)
+    );
+
     try {
       const res = await fetch("/api/copilot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: [...contextMessages, ...updated.filter((m) => m.id !== "copilot-welcome" && m.id !== "ctx-welcome")],
+          messages: [...contextMessages, ...chatHistory],
           agentQuery: text.trim(),
-          handoff,
+          handoff: isGeneral ? undefined : handoff,
+          variant: mode,
         }),
       });
       const data: CopilotResponse = await res.json();
-      const reply = formatCopilotReply(data, text);
+      const reply = formatCopilotReply(data);
       setLastSuggestions(data.suggestions ?? []);
 
       setMessages((prev) => [
@@ -132,7 +160,9 @@ export function AgentCopilotChat({
         {
           id: uuidv4(),
           role: "assistant",
-          content: "Copilot is temporarily unavailable. Use the pre-meeting brief and policy consistency checker.",
+          content: isGeneral
+            ? "Rep Desk is temporarily unavailable. Try again shortly."
+            : "Copilot is temporarily unavailable. Use the pre-meeting brief and policy consistency checker.",
           timestamp: new Date().toISOString(),
         },
       ]);
@@ -161,7 +191,11 @@ export function AgentCopilotChat({
       {lastSuggestions.length > 0 && !loading && (
         <div className="px-3 pb-2 space-y-1 max-h-32 overflow-y-auto">
           {lastSuggestions
-            .filter((s) => s.type === "response_draft" || s.type === "compliance")
+            .filter((s) =>
+              isGeneral
+                ? s.type === "plain_language" || s.type === "compliance" || s.type === "knowledge"
+                : s.type === "response_draft" || s.type === "compliance"
+            )
             .map((s) => (
               <button
                 key={`${s.type}-${s.title}`}
@@ -170,14 +204,16 @@ export function AgentCopilotChat({
                 className="block w-full text-left text-[10px] bg-white border border-gray-200 rounded-lg px-2 py-1.5 hover:border-pru-red"
               >
                 <span className="font-medium text-pru-red">{s.title}</span>
-                <span className="text-gray-600"> — copy to customer reply</span>
+                <span className="text-gray-600">
+                  {isGeneral ? " — copy note" : " — copy to customer reply"}
+                </span>
               </button>
             ))}
         </div>
       )}
 
       <div className="px-3 pb-2 flex flex-wrap gap-1">
-        {AGENT_QUICK_ACTIONS.slice(0, 4).map((action) => (
+        {quickActions.slice(0, isGeneral ? 4 : 4).map((action) => (
           <button
             key={action}
             type="button"
@@ -185,7 +221,7 @@ export function AgentCopilotChat({
             disabled={loading}
             className="text-[10px] border border-gray-200 bg-white px-2 py-1 rounded-full hover:border-pru-red disabled:opacity-40"
           >
-            {action}
+            {action.length > 28 ? `${action.slice(0, 26)}…` : action}
           </button>
         ))}
       </div>
@@ -201,7 +237,7 @@ export function AgentCopilotChat({
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Chat with copilot…"
+            placeholder={isGeneral ? "Ask Rep Desk anything…" : "Chat with copilot…"}
             className="flex-1 border rounded-lg px-3 py-2 text-sm"
             disabled={loading}
           />

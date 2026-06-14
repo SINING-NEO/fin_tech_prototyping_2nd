@@ -9,7 +9,7 @@ import { StoreSetupBanner } from "./StoreSetupBanner";
 import type { CustomerLiveSession } from "@/lib/session-store";
 
 type AgentView = "briefing" | "live" | "post_meeting";
-type RightPanelTab = "chat" | "customer_dash";
+type RightPanelTab = "rep_desk" | "session_chat" | "customer_dash";
 type MobilePanel = "queue" | "main" | "copilot";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -41,7 +41,7 @@ export function AgentCopilotWorkspace() {
   const [liveInput, setLiveInput] = useState("");
   const [queueError, setQueueError] = useState<string | null>(null);
   const [agentView, setAgentView] = useState<AgentView>("briefing");
-  const [rightPanelTab, setRightPanelTab] = useState<RightPanelTab>("chat");
+  const [rightPanelTab, setRightPanelTab] = useState<RightPanelTab>("rep_desk");
   const [mobilePanel, setMobilePanel] = useState<MobilePanel>("queue");
   const [storeWarning, setStoreWarning] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -277,25 +277,36 @@ export function AgentCopilotWorkspace() {
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0">
               <h2 className="font-semibold text-pru-red-dark text-sm">AI Copilot</h2>
-              <p className="text-xs text-gray-500 truncate">Chat or review customer brief</p>
+              <p className="text-xs text-gray-500 truncate">Rep desk, live assist, or customer brief</p>
             </div>
           </div>
           <div className="mt-2 flex gap-1 p-0.5 bg-gray-100 rounded-lg">
             <button
               type="button"
-              onClick={() => setRightPanelTab("chat")}
-              className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-colors ${
-                rightPanelTab === "chat"
+              onClick={() => setRightPanelTab("rep_desk")}
+              className={`flex-1 text-[10px] sm:text-xs py-1.5 rounded-md font-medium transition-colors ${
+                rightPanelTab === "rep_desk"
                   ? "bg-white text-pru-red shadow-sm"
                   : "text-gray-600 hover:text-gray-900"
               }`}
             >
-              Chat
+              Rep Desk
+            </button>
+            <button
+              type="button"
+              onClick={() => setRightPanelTab("session_chat")}
+              className={`flex-1 text-[10px] sm:text-xs py-1.5 rounded-md font-medium transition-colors ${
+                rightPanelTab === "session_chat"
+                  ? "bg-white text-pru-red shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              Live Assist
             </button>
             <button
               type="button"
               onClick={() => setRightPanelTab("customer_dash")}
-              className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-colors ${
+              className={`flex-1 text-[10px] sm:text-xs py-1.5 rounded-md font-medium transition-colors ${
                 rightPanelTab === "customer_dash"
                   ? "bg-white text-pru-red shadow-sm"
                   : "text-gray-600 hover:text-gray-900"
@@ -306,15 +317,33 @@ export function AgentCopilotWorkspace() {
           </div>
         </div>
         <div className="flex-1 min-h-0 h-0 overflow-hidden flex flex-col">
-          {rightPanelTab === "chat" ? (
+          {rightPanelTab === "rep_desk" ? (
             <div className="flex-1 min-h-0 h-0 overflow-hidden">
-              <AgentCopilotChat
-                handoff={selected?.handoff}
-                customerLabel={selected?.customerLabel}
-                liveTranscript={selected?.liveMessages ?? []}
-                onUseDraft={(text) => setDraftReply(text)}
-              />
+              <AgentCopilotChat mode="general" onUseDraft={(text) => setDraftReply(text)} />
             </div>
+          ) : rightPanelTab === "session_chat" ? (
+            selected ? (
+              <div className="flex-1 min-h-0 h-0 overflow-hidden">
+                <AgentCopilotChat
+                  mode="session"
+                  handoff={selected.handoff}
+                  customerLabel={selected.customerLabel}
+                  liveTranscript={selected.liveMessages ?? []}
+                  onUseDraft={(text) => setDraftReply(text)}
+                />
+              </div>
+            ) : (
+              <div className="flex-1 min-h-0 flex flex-col items-center justify-center p-6 text-center text-xs text-gray-500 gap-3">
+                <p>Select a consultation from the queue to use Live Assist with that customer&apos;s brief and transcript.</p>
+                <button
+                  type="button"
+                  onClick={() => setRightPanelTab("rep_desk")}
+                  className="text-pru-red hover:underline"
+                >
+                  Use Rep Desk for general questions →
+                </button>
+              </div>
+            )
           ) : selected ? (
             <div className="flex-1 min-h-0 h-0 flex flex-col overflow-hidden">
               <div className="flex-1 min-h-0 h-0 overflow-y-auto overscroll-contain p-4">

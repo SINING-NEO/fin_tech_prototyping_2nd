@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateCopilotAssist } from "@/lib/llm";
-import type { ChatMessage } from "@/lib/types";
+import type { ChatMessage, CopilotVariant } from "@/lib/types";
 import type { FrHandoffDocument } from "@/lib/navigator/types";
 
 interface CopilotRequest {
   messages: ChatMessage[];
   agentQuery?: string;
   handoff?: FrHandoffDocument;
+  variant?: CopilotVariant;
   sessionContext?: { handoff?: FrHandoffDocument; status?: string };
 }
 
@@ -18,8 +19,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Messages or agentQuery required" }, { status: 400 });
     }
 
-    const handoff = body.handoff ?? body.sessionContext?.handoff;
-    const response = await generateCopilotAssist(body.messages ?? [], body.agentQuery, handoff);
+    const handoff = body.variant === "general" ? undefined : body.handoff ?? body.sessionContext?.handoff;
+    const response = await generateCopilotAssist(
+      body.messages ?? [],
+      body.agentQuery,
+      handoff,
+      body.variant ?? "session"
+    );
 
     return NextResponse.json(response);
   } catch (error) {

@@ -52,9 +52,14 @@ export interface CopilotResponse {
 
 export type ChatMode = "customer" | "agent";
 
+export type CustomerChatVariant = "general" | "fr_prep";
+
+export type CopilotVariant = "session" | "general";
+
 export interface ChatRequest {
   messages: ChatMessage[];
   mode: ChatMode;
+  variant?: CustomerChatVariant;
   sessionContext?: {
     policyNumber?: string;
     productLine?: string;

@@ -2,6 +2,7 @@ export type ConsultationPhase =
   | "intake"
   | "intake_review"
   | "ai_chat"
+  | "fr_prep_chat"
   | "waiting"
   | "live"
   | "post_meeting";

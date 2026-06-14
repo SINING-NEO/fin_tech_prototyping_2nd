@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Messages required" }, { status: 400 });
     }
 
-    const response = await generateCustomerChat(body.messages, body.sessionContext);
+    const response = await generateCustomerChat(body.messages, body.sessionContext, body.variant ?? "general");
 
     return NextResponse.json(response);
   } catch (error) {

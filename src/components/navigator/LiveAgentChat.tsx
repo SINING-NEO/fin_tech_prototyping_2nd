@@ -74,7 +74,7 @@ export function LiveAgentChat({ sessionId, compact = false }: LiveAgentChatProps
   const messages = liveSession?.liveMessages ?? [];
 
   return (
-    <div className={`flex flex-col ${compact ? "h-64" : "h-80"} border-t border-pru-gray-border`}>
+    <div className={`flex flex-col h-full min-h-0 bg-white ${compact ? "" : ""}`}>
       <div className={`${compact ? "px-3 py-2" : "px-4 py-3"} bg-pru-gray-dark text-white flex-shrink-0`}>
         <p className="font-medium text-sm">Financial Representative</p>
         <p className="text-xs text-gray-300 mt-0.5">
@@ -84,7 +84,7 @@ export function LiveAgentChat({ sessionId, compact = false }: LiveAgentChatProps
         </p>
       </div>
 
-      <div className={`flex-1 overflow-y-auto ${compact ? "px-3 py-3" : "px-4 py-4"}`}>
+      <div className={`flex-1 min-h-0 overflow-y-auto ${compact ? "px-3 py-3" : "px-4 py-4"}`}>
         {waiting && messages.length === 0 && (
           <p className="text-xs text-gray-500 text-center py-6">
             Your summary has been sent to the queue. A representative will join shortly.
