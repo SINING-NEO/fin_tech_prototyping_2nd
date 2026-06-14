@@ -18,7 +18,7 @@ export function RepBriefingPanel({ handoff, products, sessionId, embedded = fals
   const briefing = handoff.repBriefing;
 
   return (
-    <div className={`space-y-4 text-sm ${embedded ? "" : "overflow-y-auto max-h-full"}`}>
+    <div className={`space-y-4 text-sm min-w-0 ${embedded ? "pb-2" : "overflow-y-auto max-h-full"}`}>
       <div className="bg-pru-red text-white rounded-xl px-4 py-3">
         <p className="text-[10px] uppercase tracking-wide opacity-80">Step 2 · Pre-meeting briefing</p>
         <h3 className="font-bold text-base mt-0.5">Customer Brief Dashboard</h3>

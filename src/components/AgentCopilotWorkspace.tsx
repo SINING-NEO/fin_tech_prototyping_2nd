@@ -157,8 +157,8 @@ export function AgentCopilotWorkspace() {
         </div>
       )}
 
-      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden">
-      <div className={`${mobilePanel === "queue" ? "flex" : "hidden"} lg:flex lg:col-span-3 border-r border-gray-200 bg-white flex-col min-h-0 overflow-hidden`}>
+      <div className="flex-1 min-h-0 h-0 grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden">
+      <div className={`${mobilePanel === "queue" ? "flex" : "hidden"} lg:flex lg:col-span-3 h-full max-h-full border-r border-gray-200 bg-white flex-col min-h-0 overflow-hidden`}>
         <div className="px-4 py-3 border-b border-gray-200 bg-pru-red-light">
           <h2 className="font-semibold text-pru-red-dark text-sm">Consultation queue</h2>
           <p className="text-xs text-gray-500">{queue.length} intake(s)</p>
@@ -210,7 +210,7 @@ export function AgentCopilotWorkspace() {
         </div>
       </div>
 
-      <div className={`${mobilePanel === "main" ? "flex" : "hidden"} lg:flex lg:col-span-5 border-r border-gray-200 flex-col bg-white min-h-0 overflow-hidden`}>
+      <div className={`${mobilePanel === "main" ? "flex" : "hidden"} lg:flex lg:col-span-5 h-full max-h-full border-r border-gray-200 flex-col bg-white min-h-0 overflow-hidden`}>
         {!selected ? (
           <div className="flex-1 flex items-center justify-center text-sm text-gray-500 p-6 text-center">
             Select a consultation or enter a Session ID to load the pre-meeting brief.
@@ -220,9 +220,9 @@ export function AgentCopilotWorkspace() {
             <PostMeetingSummaryPanel summary={selected.postMeetingSummary} sessionId={selected.id} role="agent" />
           </div>
         ) : agentView === "briefing" ? (
-          <div className="flex-1 min-h-0 flex flex-col">
-            <div className="flex-1 min-h-0 overflow-y-auto p-4">
-              <RepBriefingPanel handoff={selected.handoff} products={selected.navigator.matchedProducts} sessionId={selected.id} />
+          <div className="flex-1 min-h-0 h-0 flex flex-col overflow-hidden">
+            <div className="flex-1 min-h-0 h-0 overflow-y-auto overscroll-contain p-4">
+              <RepBriefingPanel handoff={selected.handoff} products={selected.navigator.matchedProducts} sessionId={selected.id} embedded />
             </div>
             <div className="flex-shrink-0 border-t border-gray-200 bg-white p-4">
               <button type="button" onClick={() => void acceptCustomer(selected.id)} className="btn-primary text-sm w-full">
@@ -249,7 +249,7 @@ export function AgentCopilotWorkspace() {
               </div>
             )}
 
-            <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3">
+            <div className="flex-1 min-h-0 h-0 overflow-y-auto overscroll-contain px-4 py-3">
               {selected.liveMessages.map((msg) => (
                 <MessageBubble key={msg.id} message={{ ...msg, role: msg.role === "assistant" ? "assistant" : "user" }} />
               ))}
@@ -272,12 +272,12 @@ export function AgentCopilotWorkspace() {
         )}
       </div>
 
-      <div className={`${mobilePanel === "copilot" ? "flex" : "hidden"} lg:flex lg:col-span-4 flex-col bg-gray-50 min-h-0 overflow-hidden`}>
+      <div className={`${mobilePanel === "copilot" ? "flex" : "hidden"} lg:flex lg:col-span-4 h-full max-h-full flex-col bg-gray-50 min-h-0 overflow-hidden`}>
         <div className="px-4 py-3 border-b border-gray-200 bg-white flex-shrink-0">
           <div className="flex items-center justify-between gap-2">
-            <div>
+            <div className="min-w-0">
               <h2 className="font-semibold text-pru-red-dark text-sm">AI Copilot</h2>
-              <p className="text-xs text-gray-500">Chat or review customer brief</p>
+              <p className="text-xs text-gray-500 truncate">Chat or review customer brief</p>
             </div>
           </div>
           <div className="mt-2 flex gap-1 p-0.5 bg-gray-100 rounded-lg">
@@ -305,9 +305,9 @@ export function AgentCopilotWorkspace() {
             </button>
           </div>
         </div>
-        <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+        <div className="flex-1 min-h-0 h-0 overflow-hidden flex flex-col">
           {rightPanelTab === "chat" ? (
-            <div className="flex-1 min-h-0 overflow-hidden">
+            <div className="flex-1 min-h-0 h-0 overflow-hidden">
               <AgentCopilotChat
                 handoff={selected?.handoff}
                 customerLabel={selected?.customerLabel}
@@ -316,8 +316,8 @@ export function AgentCopilotWorkspace() {
               />
             </div>
           ) : selected ? (
-            <div className="flex-1 min-h-0 flex flex-col">
-              <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4">
+            <div className="flex-1 min-h-0 h-0 flex flex-col overflow-hidden">
+              <div className="flex-1 min-h-0 h-0 overflow-y-auto overscroll-contain p-4">
                 <RepBriefingPanel
                   handoff={selected.handoff}
                   products={selected.navigator.matchedProducts}
@@ -326,7 +326,7 @@ export function AgentCopilotWorkspace() {
                 />
               </div>
               {agentView === "briefing" && (
-                <div className="flex-shrink-0 border-t border-gray-200 bg-white p-3">
+                <div className="flex-shrink-0 border-t border-gray-200 bg-white p-3 shadow-[0_-4px_12px_rgba(0,0,0,0.04)]">
                   <button
                     type="button"
                     onClick={() => void acceptCustomer(selected.id)}
