@@ -278,6 +278,52 @@ function detectTopics(text: string): string[] {
   return topics;
 }
 
+export function buildPruAssistChatSummary(
+  session: NavigatorSession,
+  messages: { role: string; content: string }[]
+): import("./types").PruAssistChatSummary {
+  const userMsgs = messages.filter((m) => m.role === "user").map((m) => m.content);
+  const allText = messages.map((m) => m.content).join(" ");
+  const topics = detectTopics(allText);
+
+  const topicLabels: Record<string, string> = {
+    affordability: "Premium & affordability",
+    riders: "Riders & add-ons",
+    hospitalisation: "Hospitalisation coverage",
+    "coverage scope": "What is covered",
+    "exclusions & claims": "Exclusions & claims process",
+  };
+
+  const customerQuestions = userMsgs.filter((m) => m.includes("?") || /how|what|why|can i|should/i.test(m));
+  const remainingQuestions = userMsgs.length
+    ? ["Confirm decision timeline", "Any plan-specific exclusions to clarify"]
+    : ["Customer has not started PruAssist chat yet"];
+
+  const repTalkingPoints = [
+    userMsgs.length
+      ? `Customer asked about: ${customerQuestions.slice(0, 2).join("; ") || userMsgs[0]?.slice(0, 80)}`
+      : "No PruAssist chat yet — rely on intake brief",
+    topics.includes("affordability")
+      ? "Address premium concerns with scenario-based hospitalisation example"
+      : "Walk through coverage depth vs premium trade-offs",
+    session.keyConcerns?.[0]
+      ? `Top concern from intake: ${session.keyConcerns[0]}`
+      : "Confirm primary protection need in live conversation",
+  ];
+
+  return {
+    generatedAt: new Date().toISOString(),
+    topicsDiscussed: topics.map((t) => topicLabels[t] ?? t),
+    customerQuestions: customerQuestions.length ? customerQuestions.slice(0, 5) : ["No explicit questions recorded"],
+    keyClarifications: userMsgs.length
+      ? [`Discussed ${topics.length ? topics.join(", ") : "general insurance topics"} via PruAssist`]
+      : [],
+    remainingQuestions,
+    repTalkingPoints,
+    messageCount: messages.filter((m) => m.role === "user" || m.role === "assistant").length,
+  };
+}
+
 export function matchProductsForIntake(session: NavigatorSession): MatchedProduct[] {
   const concernText = [
     session.consultationIntent,

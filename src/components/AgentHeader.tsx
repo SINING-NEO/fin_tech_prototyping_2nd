@@ -18,18 +18,20 @@ export function AgentHeader() {
 
   return (
     <header className="sticky top-0 z-50 bg-pru-gray-dark text-white shadow-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14">
-          <div className="flex items-center gap-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex flex-wrap items-center justify-between gap-2 min-h-14 py-2 sm:py-0 sm:h-14">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             <PrudentialLogo variant="white" />
-            <span className="hidden sm:inline text-xs bg-white/10 px-3 py-1 rounded-full">
+            <span className="hidden sm:inline text-xs bg-white/10 px-3 py-1 rounded-full whitespace-nowrap">
               Agent Portal
             </span>
           </div>
 
-          <ConnectionStatus role="agent" />
+          <div className="order-3 w-full sm:order-none sm:w-auto sm:flex-1 sm:max-w-xs sm:mx-4">
+            <ConnectionStatus role="agent" />
+          </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <Link href="/" className="text-xs text-gray-300 hover:text-white hidden sm:inline">
               Switch portal
             </Link>

@@ -5,7 +5,10 @@ import { v4 as uuidv4 } from "uuid";
 import { MessageBubble, TypingIndicator } from "./MessageBubble";
 import { SUGGESTED_STARTERS } from "@/lib/prompts";
 import type { ChatMessage, ChatResponse } from "@/lib/types";
-import type { FrHandoffDocument } from "@/lib/navigator/types";
+import type { FrHandoffDocument, PruAssistChatSummary } from "@/lib/navigator/types";
+import { syncAiChatMessages } from "@/lib/navigator/session-api";
+import { buildPruAssistChatSummary } from "@/lib/navigator/engine";
+import { PruAssistChatSummaryPanel } from "./navigator/PruAssistChatSummaryPanel";
 
 const WELCOME_MESSAGE: ChatMessage = {
   id: "welcome",
@@ -28,6 +31,8 @@ interface CustomerChatProps {
   postNavigator?: boolean;
   productLine?: string;
   handoffContext?: FrHandoffDocument;
+  sessionId?: string;
+  navigatorSession?: import("@/lib/navigator/types").NavigatorSession;
 }
 
 export function CustomerChat({
@@ -35,6 +40,8 @@ export function CustomerChat({
   postNavigator = false,
   productLine,
   handoffContext,
+  sessionId,
+  navigatorSession,
 }: CustomerChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>(
     postNavigator ? [POST_NAVIGATOR_WELCOME] : [WELCOME_MESSAGE]
@@ -45,11 +52,23 @@ export function CustomerChat({
   const [escalation, setEscalation] = useState<{ show: boolean; reason?: string }>({
     show: false,
   });
+  const [chatSummary, setChatSummary] = useState<PruAssistChatSummary | null>(
+    handoffContext?.pruAssistChatSummary ?? null
+  );
+  const [summarySynced, setSummarySynced] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
+
+  async function persistChatSummary(updatedMessages: ChatMessage[]) {
+    if (!sessionId || !navigatorSession) return;
+    const summary = buildPruAssistChatSummary(navigatorSession, updatedMessages);
+    setChatSummary(summary);
+    const ok = await syncAiChatMessages(sessionId, updatedMessages);
+    setSummarySynced(ok);
+  }
 
   async function sendMessage(text: string) {
     if (!text.trim() || loading) return;
@@ -96,6 +115,9 @@ export function CustomerChat({
       setMessages((prev) => [...prev, assistantMsg]);
       setFollowUps(data.suggestedFollowUps ?? []);
 
+      const fullMessages = [...updatedMessages, assistantMsg];
+      void persistChatSummary(fullMessages);
+
       if (data.escalateToHuman) {
         setEscalation({ show: true, reason: data.escalationReason });
       }
@@ -117,6 +139,17 @@ export function CustomerChat({
 
   return (
     <div className="flex flex-col h-full bg-white">
+      {chatSummary && chatSummary.messageCount > 1 && (
+        <div className={`flex-shrink-0 ${compact ? "px-3 pt-3" : "px-4 pt-4"}`}>
+          <PruAssistChatSummaryPanel summary={chatSummary} compact={compact} role="customer" />
+          {summarySynced && (
+            <p className="text-[10px] text-green-700 mt-1 text-center">
+              Summary shared with your Financial Representative
+            </p>
+          )}
+        </div>
+      )}
+
       <div className={`flex-1 overflow-y-auto ${compact ? "px-3 py-4" : "px-4 py-6"}`}>
         {messages.map((msg) => (
           <MessageBubble key={msg.id} message={msg} compact={compact} />

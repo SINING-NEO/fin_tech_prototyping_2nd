@@ -216,14 +216,24 @@ ${sessionContext?.summarySnippet ? `Prior navigator summary: ${sessionContext.su
 
 export async function generateCopilotAssist(
   messages: ChatMessage[],
-  agentQuery?: string
+  agentQuery?: string,
+  handoff?: import("./navigator/types").FrHandoffDocument
 ): Promise<CopilotResponse> {
-  const lastUser = getLastUserMessage(messages);
-  const searchQuery = agentQuery ?? lastUser;
+  const lastUser = agentQuery ?? getLastUserMessage(messages);
+  const searchQuery = lastUser;
   const contexts = retrieveContext(searchQuery, 5);
 
   if (useMockLLM()) {
-    return mockCopilotResponse(messages, contexts);
+    const base = mockCopilotResponse(messages.length ? messages : [{ id: "q", role: "user", content: lastUser, timestamp: new Date().toISOString() }], contexts);
+    if (handoff?.customerInsight && agentQuery) {
+      base.suggestions.unshift({
+        type: "suitability",
+        title: "Customer context",
+        content: `${handoff.customerInsight.riskProfileLabel}. Likely objections: ${handoff.customerInsight.likelyObjections.join("; ")}.`,
+        priority: "medium",
+      });
+    }
+    return base;
   }
 
   const client = getOpenAIClient()!;
@@ -232,13 +242,17 @@ export async function generateCopilotAssist(
     .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
     .join("\n");
 
+  const handoffBlock = handoff
+    ? `\nCUSTOMER HANDOFF:\nNeeds: ${handoff.customerSummary.needsIdentified.join(", ")}\nPlans: ${handoff.customerSummary.productsExplored.join(", ")}\nInsight: ${handoff.customerInsight?.riskProfileLabel ?? "N/A"}`
+    : "";
+
   const completion = await client.chat.completions.create({
     model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
     messages: [
       { role: "system", content: AGENT_COPILOT_SYSTEM_PROMPT },
       {
         role: "user",
-        content: `LIVE CONVERSATION:\n${conversationTranscript}\n\nKNOWLEDGE BASE:\n${contextBlock}\n\nAgent request: ${agentQuery ?? "Provide real-time assistance for this interaction"}`,
+        content: `LIVE CONVERSATION:\n${conversationTranscript || "(No live transcript yet)"}\n${handoffBlock}\n\nKNOWLEDGE BASE:\n${contextBlock}\n\nAgent request: ${agentQuery ?? "Provide real-time assistance for this interaction"}`,
       },
     ],
     temperature: 0.4,

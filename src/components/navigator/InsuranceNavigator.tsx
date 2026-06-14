@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { LiveAgentChat } from "./LiveAgentChat";
+import { CustomerChat } from "@/components/CustomerChat";
+import { SummaryPanel } from "./SummaryPanel";
 import { PlanComparisonInfographic } from "./PlanComparisonInfographic";
 import { PostMeetingSummaryPanel } from "./PostMeetingSummaryPanel";
 import { ConnectionStatus } from "@/components/ConnectionStatus";
@@ -202,6 +204,18 @@ export function InsuranceNavigator({ compact = false }: InsuranceNavigatorProps)
     await requestAgentChat(next.id);
   }
 
+  async function startAiChat() {
+    const doc = handoff ?? buildHandoffDocument(session);
+    setHandoffDoc(doc);
+    const next: NavigatorSession = {
+      ...session,
+      phase: "ai_chat",
+      updatedAt: new Date().toISOString(),
+    };
+    setSession(next);
+    await syncCustomerSession(next, "ai_chat");
+  }
+
   async function joinLiveConsultation() {
     setSession((s) => ({ ...s, phase: "live", updatedAt: new Date().toISOString() }));
   }
@@ -210,8 +224,46 @@ export function InsuranceNavigator({ compact = false }: InsuranceNavigatorProps)
 
   if (phase === "post_meeting" && postSummary) {
     return (
-      <div className={`flex flex-col h-full bg-white overflow-y-auto ${px} py-4`}>
-        <PostMeetingSummaryPanel summary={postSummary} sessionId={session.id} role="customer" />
+      <div className="flex flex-col h-full bg-white">
+        <CustomerPhaseNav
+          px={px}
+          active="post_meeting"
+          showLive
+          onSelect={(p) => {
+            if (p === "ai_chat") void startAiChat();
+            else setSession((s) => ({ ...s, phase: p, updatedAt: new Date().toISOString() }));
+          }}
+        />
+        <div className={`flex-1 overflow-y-auto ${px} py-4`}>
+          <PostMeetingSummaryPanel summary={postSummary} sessionId={session.id} role="customer" />
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === "ai_chat") {
+    const chatHandoff = handoff ?? buildHandoffDocument(session);
+    return (
+      <div className="flex flex-col h-full bg-white">
+        <CustomerPhaseNav
+          px={px}
+          active="ai_chat"
+          showLive={Boolean(handoffDoc)}
+          onSelect={(p) => setSession((s) => ({ ...s, phase: p, updatedAt: new Date().toISOString() }))}
+        />
+        <div className={`${px} py-2 flex-shrink-0 border-b border-pru-gray-border`}>
+          <SummaryPanel handoff={chatHandoff} compact={compact} defaultOpen={false} />
+        </div>
+        <div className="flex-1 min-h-0">
+          <CustomerChat
+            compact={compact}
+            postNavigator
+            productLine={session.consultationIntent ?? session.insuranceType}
+            handoffContext={chatHandoff}
+            sessionId={session.id}
+            navigatorSession={session}
+          />
+        </div>
       </div>
     );
   }
@@ -219,13 +271,18 @@ export function InsuranceNavigator({ compact = false }: InsuranceNavigatorProps)
   if (phase === "live") {
     return (
       <div className="flex flex-col h-full bg-white">
-        <WorkflowHeader workflowIndex={2} px={px} />
+        <CustomerPhaseNav
+          px={px}
+          active="live"
+          showLive
+          onSelect={(p) => {
+            if (p === "ai_chat") void startAiChat();
+            else setSession((s) => ({ ...s, phase: p, updatedAt: new Date().toISOString() }));
+          }}
+        />
         <div className={`${px} py-2 bg-green-50 border-b border-green-100 flex-shrink-0 space-y-2`}>
           <p className="text-xs font-medium text-green-900">Step 3 · Live consultation with your Financial Representative</p>
           <ConnectionStatus role="customer" sessionId={session.id} />
-          <p className="text-[10px] text-green-700">
-            AI supports your rep with real-time transcription analysis — clearer, more consistent consultations.
-          </p>
         </div>
         <div className="flex-1 min-h-0">
           <LiveAgentChat sessionId={session.id} compact={compact} />
@@ -236,9 +293,18 @@ export function InsuranceNavigator({ compact = false }: InsuranceNavigatorProps)
 
   if (phase === "waiting") {
     return (
-      <div className={`flex flex-col h-full bg-white overflow-y-auto ${px} py-4`}>
-        <WorkflowHeader workflowIndex={1} px={px} />
-        <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+      <div className="flex flex-col h-full bg-white overflow-y-auto">
+        <CustomerPhaseNav
+          px={px}
+          active="waiting"
+          showLive
+          onSelect={(p) => {
+            if (p === "ai_chat") void startAiChat();
+            else setSession((s) => ({ ...s, phase: p, updatedAt: new Date().toISOString() }));
+          }}
+        />
+        <div className={`${px} py-4 flex-1`}>
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
           <p className="text-xs font-medium text-amber-900 uppercase tracking-wide">Consultation booked</p>
           <h3 className="font-bold text-lg text-amber-950 mt-1">Your Financial Representative is preparing</h3>
           <p className="text-sm text-amber-800 mt-2 leading-relaxed">
@@ -265,6 +331,7 @@ export function InsuranceNavigator({ compact = false }: InsuranceNavigatorProps)
         <button type="button" onClick={() => void joinLiveConsultation()} className="btn-primary w-full mt-4 text-sm">
           Join live consultation when rep is ready →
         </button>
+        </div>
       </div>
     );
   }
@@ -303,6 +370,9 @@ export function InsuranceNavigator({ compact = false }: InsuranceNavigatorProps)
         <div className="mt-4 space-y-2">
           <button type="button" onClick={() => void bookConsultation()} className="btn-primary w-full text-sm">
             Book consultation with Financial Representative →
+          </button>
+          <button type="button" onClick={() => void startAiChat()} className="w-full text-sm border border-pru-red text-pru-red py-2.5 rounded-full hover:bg-pru-red-light">
+            Keep chatting with PruAssist AI →
           </button>
           <button type="button" onClick={() => downloadSummaryPdf(handoff)} className="btn-secondary w-full text-sm">
             Download intake summary
@@ -421,6 +491,47 @@ export function InsuranceNavigator({ compact = false }: InsuranceNavigatorProps)
             Generate AI insight →
           </button>
         )}
+      </div>
+    </div>
+  );
+}
+
+function CustomerPhaseNav({
+  px,
+  active,
+  showLive,
+  onSelect,
+}: {
+  px: string;
+  active: ConsultationPhase;
+  showLive?: boolean;
+  onSelect: (phase: ConsultationPhase) => void;
+}) {
+  const tabs: { id: ConsultationPhase; label: string; show?: boolean }[] = [
+    { id: "intake_review", label: "Summary" },
+    { id: "ai_chat", label: "PruAssist AI" },
+    { id: "waiting", label: "Waiting", show: showLive },
+    { id: "live", label: "Live FR", show: showLive },
+    { id: "post_meeting", label: "Wrap-up", show: active === "post_meeting" },
+  ];
+
+  return (
+    <div className={`${px} py-2 bg-white border-b border-pru-gray-border flex-shrink-0`}>
+      <div className="flex gap-1 overflow-x-auto text-[10px]">
+        {tabs
+          .filter((t) => t.show !== false)
+          .map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => onSelect(tab.id)}
+              className={`whitespace-nowrap px-2.5 py-1 rounded-full transition-colors ${
+                active === tab.id ? "bg-pru-red text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
       </div>
     </div>
   );

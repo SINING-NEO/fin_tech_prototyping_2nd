@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import type { ChatMessage } from "../types";
 import type { FrHandoffDocument, NavigatorSession } from "../navigator/types";
-import { buildHandoffDocument } from "../navigator/engine";
+import { buildHandoffDocument, buildPruAssistChatSummary } from "../navigator/engine";
 import type { CustomerLiveSession, CustomerSessionStatus } from "./types";
 
 const STORE_FILE = path.join(process.cwd(), ".demo-sessions.json");
@@ -62,12 +62,19 @@ export function upsertCustomerSession(
   const existing = sessions.get(navigator.id);
   const now = new Date().toISOString();
 
+  const mergedHandoff = {
+    ...handoff,
+    pruAssistChatSummary: existing?.pruAssistChatSummary ?? handoff.pruAssistChatSummary,
+  };
+
   const record: CustomerLiveSession = {
     id: navigator.id,
     status: existing?.status === "live_with_agent" ? existing.status : status,
-    handoff,
+    handoff: mergedHandoff,
     navigator,
     liveMessages: existing?.liveMessages ?? [],
+    aiChatMessages: existing?.aiChatMessages ?? [],
+    pruAssistChatSummary: existing?.pruAssistChatSummary,
     customerLabel: customerLabel(navigator),
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
@@ -141,6 +148,22 @@ export function closeSessionWithSummary(
   if (!session) return undefined;
   session.status = "closed";
   session.postMeetingSummary = postMeetingSummary;
+  session.updatedAt = new Date().toISOString();
+  persistSessions(sessions);
+  return session;
+}
+
+export function updateAiChatSession(
+  id: string,
+  aiChatMessages: ChatMessage[]
+): CustomerLiveSession | undefined {
+  const session = sessions.get(id);
+  if (!session) return undefined;
+
+  const pruAssistChatSummary = buildPruAssistChatSummary(session.navigator, aiChatMessages);
+  session.aiChatMessages = aiChatMessages;
+  session.pruAssistChatSummary = pruAssistChatSummary;
+  session.handoff = { ...session.handoff, pruAssistChatSummary };
   session.updatedAt = new Date().toISOString();
   persistSessions(sessions);
   return session;

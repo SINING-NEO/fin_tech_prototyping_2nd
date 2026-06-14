@@ -2,25 +2,32 @@
 
 import type { FrHandoffDocument } from "@/lib/navigator/types";
 import { PlanComparisonInfographic } from "./PlanComparisonInfographic";
+import { PruAssistChatSummaryPanel } from "./PruAssistChatSummaryPanel";
 import type { MatchedProduct } from "@/lib/navigator/types";
 
 interface RepBriefingPanelProps {
   handoff: FrHandoffDocument;
   products: MatchedProduct[];
   sessionId: string;
+  /** When true, parent handles scrolling (e.g. agent sidebar Customer Dash). */
+  embedded?: boolean;
 }
 
-export function RepBriefingPanel({ handoff, products, sessionId }: RepBriefingPanelProps) {
+export function RepBriefingPanel({ handoff, products, sessionId, embedded = false }: RepBriefingPanelProps) {
   const insight = handoff.customerInsight;
   const briefing = handoff.repBriefing;
 
   return (
-    <div className="space-y-4 text-sm overflow-y-auto max-h-full">
+    <div className={`space-y-4 text-sm ${embedded ? "" : "overflow-y-auto max-h-full"}`}>
       <div className="bg-pru-red text-white rounded-xl px-4 py-3">
         <p className="text-[10px] uppercase tracking-wide opacity-80">Step 2 · Pre-meeting briefing</p>
         <h3 className="font-bold text-base mt-0.5">Customer Brief Dashboard</h3>
         <p className="text-xs text-red-100 mt-1 font-mono">Session ID: {sessionId.slice(0, 8)}…</p>
       </div>
+
+      {handoff.pruAssistChatSummary && (
+        <PruAssistChatSummaryPanel summary={handoff.pruAssistChatSummary} role="agent" />
+      )}
 
       {insight && (
         <section className="border border-pru-gray-border rounded-xl p-4 bg-white">

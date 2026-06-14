@@ -1,6 +1,7 @@
 export type ConsultationPhase =
   | "intake"
   | "intake_review"
+  | "ai_chat"
   | "waiting"
   | "live"
   | "post_meeting";
@@ -132,11 +133,22 @@ export type PostMeetingSummary = {
   nextBestStep: string;
 };
 
+export type PruAssistChatSummary = {
+  generatedAt: string;
+  topicsDiscussed: string[];
+  customerQuestions: string[];
+  keyClarifications: string[];
+  remainingQuestions: string[];
+  repTalkingPoints: string[];
+  messageCount: number;
+};
+
 export type FrHandoffDocument = {
   sessionId: string;
   generatedAt: string;
   customerInsight?: CustomerInsightSummary;
   repBriefing?: RepBriefing;
+  pruAssistChatSummary?: PruAssistChatSummary;
   customerSummary: {
     needsIdentified: string[];
     productsExplored: string[];

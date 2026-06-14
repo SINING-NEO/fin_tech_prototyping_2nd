@@ -1,6 +1,7 @@
 import { Redis } from "@upstash/redis";
 import type { ChatMessage } from "../types";
 import type { FrHandoffDocument, NavigatorSession } from "../navigator/types";
+import { buildPruAssistChatSummary } from "../navigator/engine";
 import type { CustomerLiveSession, CustomerSessionStatus } from "./types";
 
 const SESSION_INDEX = "pru:sessions:index";
@@ -44,12 +45,19 @@ export async function upsertCustomerSession(
   const existing = await redis.get<CustomerLiveSession>(sessionKey(navigator.id));
   const now = new Date().toISOString();
 
+  const mergedHandoff = {
+    ...handoff,
+    pruAssistChatSummary: existing?.pruAssistChatSummary ?? handoff.pruAssistChatSummary,
+  };
+
   const record: CustomerLiveSession = {
     id: navigator.id,
     status: existing?.status === "live_with_agent" ? existing.status : status,
-    handoff,
+    handoff: mergedHandoff,
     navigator,
     liveMessages: existing?.liveMessages ?? [],
+    aiChatMessages: existing?.aiChatMessages ?? [],
+    pruAssistChatSummary: existing?.pruAssistChatSummary,
     customerLabel: customerLabel(navigator),
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
@@ -123,6 +131,23 @@ export async function agentAcceptSession(id: string): Promise<CustomerLiveSessio
     });
   }
 
+  await saveSession(redis, session);
+  return session;
+}
+
+export async function updateAiChatSession(
+  id: string,
+  aiChatMessages: ChatMessage[]
+): Promise<CustomerLiveSession | undefined> {
+  const redis = getRedisClient();
+  const session = await redis.get<CustomerLiveSession>(sessionKey(id));
+  if (!session) return undefined;
+
+  const pruAssistChatSummary = buildPruAssistChatSummary(session.navigator, aiChatMessages);
+  session.aiChatMessages = aiChatMessages;
+  session.pruAssistChatSummary = pruAssistChatSummary;
+  session.handoff = { ...session.handoff, pruAssistChatSummary };
+  session.updatedAt = new Date().toISOString();
   await saveSession(redis, session);
   return session;
 }

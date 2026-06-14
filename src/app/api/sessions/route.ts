@@ -4,6 +4,7 @@ import {
   upsertCustomerSession,
   getSessionStoreMode,
   getSessionStoreError,
+  getSessionStoreWarning,
 } from "@/lib/session-store";
 import { buildHandoffDocument } from "@/lib/navigator/engine";
 import type { CustomerSessionStatus } from "@/lib/session-store";
@@ -25,6 +26,7 @@ export async function GET(request: NextRequest) {
     const sessions = await listCustomerSessions();
     return NextResponse.json({
       storeMode: getSessionStoreMode(),
+      storeWarning: getSessionStoreWarning(),
       sessions: sessions.map((s) => ({
         id: s.id,
         status: s.status,

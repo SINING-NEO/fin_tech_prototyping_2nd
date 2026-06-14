@@ -1,6 +1,6 @@
 import type { NavigatorSession, FrHandoffDocument } from "./types";
+import type { ChatMessage } from "../types";
 import type { CustomerSessionStatus } from "../session-store";
-
 const SESSION_ID_KEY = "pru_customer_session_id";
 
 export function saveCustomerSessionId(id: string): void {
@@ -36,6 +36,22 @@ export async function syncCustomerSession(
     return data;
   } catch {
     return { error: "Could not reach local server" };
+  }
+}
+
+export async function syncAiChatMessages(
+  sessionId: string,
+  aiChatMessages: ChatMessage[]
+): Promise<boolean> {
+  try {
+    const res = await fetch(`/api/sessions/${sessionId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "sync_ai_chat", aiChatMessages }),
+    });
+    return res.ok;
+  } catch {
+    return false;
   }
 }
 

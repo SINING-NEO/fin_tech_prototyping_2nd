@@ -9,6 +9,13 @@ export type { CustomerLiveSession, CustomerSessionStatus, SessionStoreMode } fro
 
 const VERCEL_DEPLOYED = process.env.VERCEL === "1";
 
+function allowMemoryFallbackOnVercel(): boolean {
+  return (
+    process.env.DEMO_MODE_NO_REDIS === "true" ||
+    process.env.USE_MEMORY_STORE === "true"
+  );
+}
+
 function hasRedisConfig(): boolean {
   const url = process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN;
@@ -17,7 +24,7 @@ function hasRedisConfig(): boolean {
 
 export function getSessionStoreMode(): SessionStoreMode {
   if (hasRedisConfig()) return "redis";
-  if (VERCEL_DEPLOYED) return "unavailable";
+  if (VERCEL_DEPLOYED && !allowMemoryFallbackOnVercel()) return "unavailable";
   return "file";
 }
 
@@ -27,6 +34,11 @@ export function getSessionStoreError(): string | null {
     "Live customer–agent sync requires Redis on Vercel. " +
     "Add a free Upstash Redis database and set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN in Vercel env vars."
   );
+}
+
+export function getSessionStoreWarning(): string | null {
+  if (!VERCEL_DEPLOYED || hasRedisConfig() || !allowMemoryFallbackOnVercel()) return null;
+  return "Demo memory store — sessions may not sync across server instances. Add Upstash Redis for reliable live sync.";
 }
 
 function assertStoreAvailable(): void {
@@ -103,6 +115,17 @@ export async function closeSessionWithSummary(
     return redisStore.closeSessionWithSummary(id, postMeetingSummary);
   }
   return memoryStore.closeSessionWithSummary(id, postMeetingSummary);
+}
+
+export async function updateAiChatSession(
+  id: string,
+  aiChatMessages: ChatMessage[]
+): Promise<CustomerLiveSession | undefined> {
+  assertStoreAvailable();
+  if (hasRedisConfig()) {
+    return redisStore.updateAiChatSession(id, aiChatMessages);
+  }
+  return memoryStore.updateAiChatSession(id, aiChatMessages);
 }
 
 export async function seedDemoSessionsIfEmpty(): Promise<void> {

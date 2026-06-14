@@ -14,6 +14,8 @@ export interface CustomerLiveSession {
   handoff: FrHandoffDocument;
   navigator: NavigatorSession;
   liveMessages: ChatMessage[];
+  aiChatMessages: ChatMessage[];
+  pruAssistChatSummary?: import("../navigator/types").PruAssistChatSummary;
   customerLabel: string;
   postMeetingSummary?: import("../navigator/types").PostMeetingSummary;
   createdAt: string;

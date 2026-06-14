@@ -5,6 +5,7 @@ import {
   agentAcceptSession,
   addLiveMessage,
   closeSessionWithSummary,
+  updateAiChatSession,
   getSessionStoreMode,
   getSessionStoreError,
 } from "@/lib/session-store";
@@ -66,6 +67,15 @@ export async function PATCH(
       if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
       const summary = buildPostMeetingSummary(existing.navigator, existing.liveMessages);
       const session = await closeSessionWithSummary(id, summary);
+      if (!session) return NextResponse.json({ error: "Not found" }, { status: 404 });
+      return NextResponse.json({ session, storeMode: getSessionStoreMode() });
+    }
+
+    if (body.action === "sync_ai_chat") {
+      if (!body.aiChatMessages || !Array.isArray(body.aiChatMessages)) {
+        return NextResponse.json({ error: "aiChatMessages required" }, { status: 400 });
+      }
+      const session = await updateAiChatSession(id, body.aiChatMessages);
       if (!session) return NextResponse.json({ error: "Not found" }, { status: 404 });
       return NextResponse.json({ session, storeMode: getSessionStoreMode() });
     }
